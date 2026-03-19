@@ -1,0 +1,93 @@
+﻿@page "/diet-log"
+@inject NavigationManager Nav
+
+<MudContainer MaxWidth="MaxWidth.Medium">
+    <MudText Typo="Typo.h4" Class="mb-6">
+        飲食歷史日誌
+    </MudText>
+
+    <MudPaper Elevation="3">
+        <MudList T="string" Clickable="true">
+
+            @{
+                var groupedMeals = meals.GroupBy(m => m.Date).OrderByDescending(g => g.Key).ToList();
+            }
+
+            @for (int i = 0; i < groupedMeals.Count; i++)
+            {
+                var dateGroup = groupedMeals[i];
+                
+                // 🌟 核心邏輯：檢查這一天裡面，是不是有任何一筆紀錄包含圖片？
+                bool hasImages = dateGroup.Any(m => !string.IsNullOrEmpty(m.Image));
+
+                <MudListItem T="string" OnClick="@(() => OpenDailyMeals(dateGroup.Key))" Class="py-4">
+    
+                    <div class="d-flex justify-space-between align-center px-2 @(hasImages ? "mb-3" : "")">
+                        <MudText Typo="Typo.h6" Class="d-flex align-center">
+                            <MudIcon Icon="@Icons.Material.Rounded.CalendarMonth" Class="mr-3" Color="Color.Primary" />
+                            <span style="font-weight: bold;">@dateGroup.Key</span>
+                        </MudText>
+
+                        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="d-flex align-center">
+                            共 @dateGroup.Count(m => !string.IsNullOrEmpty(m.Image)) 筆紀錄 <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Class="ml-1" Size="Size.Small" />
+                        </MudText>
+                    </div>
+
+                    @if (hasImages)
+                    {
+                        <div class="d-flex gap-3 px-2 ml-10" style="overflow-x: auto; padding-bottom: 4px;">
+                            @foreach (var meal in dateGroup)
+                            {
+                                // 雙重保險：只顯示有圖片網址的項目
+                                @if (!string.IsNullOrEmpty(meal.Image))
+                                {
+                                    <MudImage Src="@meal.Image"
+                                              Width="56"
+                                              Height="56"
+                                              ObjectFit="ObjectFit.Cover"
+                                              Class="rounded-lg"
+                                              Elevation="1" />
+                                }
+                            }
+                        </div>
+                    }
+
+                </MudListItem>
+
+                @if (i < groupedMeals.Count - 1)
+                {
+                    <MudDivider />
+                }
+            }
+
+        </MudList>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    class Meal
+    {
+        public string Date { get; set; }
+        public string Image { get; set; }
+    }
+
+    List<Meal> meals = new()
+    {
+        // 3/14 有圖片的資料
+        new Meal { Date = "2026-03-14", Image = "https://images.unsplash.com/photo-1628557044797-f21a177c37ec?q=80&w=800&auto=format&fit=crop" },
+        new Meal { Date = "2026-03-14", Image = "https://images.unsplash.com/photo-1467003909585-2f8a72700288?q=80&w=800&auto=format&fit=crop" },
+        new Meal { Date = "2026-03-14", Image = "https://images.unsplash.com/photo-1488477181946-6428a0291777?q=80&w=800&auto=format&fit=crop" },
+        new Meal { Date = "2026-03-14", Image = "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=800&auto=format&fit=crop" },
+
+        // 3/13 有圖片的資料
+        new Meal { Date = "2026-03-13", Image = "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=800&auto=format&fit=crop" },
+        
+        // 🌟 3/12 沒有圖片的資料 (Image 為空)
+        new Meal { Date = "2026-03-12" }
+    };
+
+    void OpenDailyMeals(string date)
+    {
+        Nav.NavigateTo($"/diet-log/{date}");
+    }
+}

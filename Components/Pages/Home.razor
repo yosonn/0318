@@ -1,7 +1,153 @@
 ﻿@page "/"
 
-<PageTitle>Home</PageTitle>
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-6">
 
-<h1>Hello, world!</h1>
+    <MudText Typo="Typo.h4" Class="mb-4" Style="font-weight:600;">
+        今日營養儀表板
+    </MudText>
 
-Welcome to your new app.
+    <MudGrid Class="mb-6">
+
+        <MudItem xs="12" sm="6">
+            <MudPaper Class="pa-6 rounded-xl" Elevation="2">
+
+                <MudText Typo="Typo.subtitle2" Color="Color.Secondary">
+                    今日攝取
+                </MudText>
+
+                <MudText Typo="Typo.h3" Color="Color.Primary" Style="font-weight:bold;">
+                    1250 kcal
+                </MudText>
+
+                <MudProgressLinear Value="58" Color="Color.Success" Class="mt-4" />
+
+                <MudText Typo="Typo.caption">
+                    已完成 58% 的每日目標
+                </MudText>
+
+            </MudPaper>
+        </MudItem>
+
+
+        <MudItem xs="12" sm="6">
+            <MudPaper Class="pa-6 rounded-xl" Elevation="2">
+
+                <MudText Typo="Typo.subtitle2" Color="Color.Secondary">
+                    AI 營養建議
+                </MudText>
+
+                <MudText Typo="Typo.body1">
+                    目前碳水化合物比例偏高，
+                    建議晚餐增加蛋白質攝取。
+                </MudText>
+
+            </MudPaper>
+        </MudItem>
+
+    </MudGrid>
+
+
+    <MudText Typo="Typo.h6" Class="mb-3">
+        今日餐點
+    </MudText>
+
+    <MudGrid Class="mb-6">
+
+        @foreach (var meal in meals)
+        {
+            <MudItem xs="6" sm="3">
+
+                <MudPaper Class="pa-4 rounded-xl text-center" Elevation="1">
+
+                    <MudIcon Icon="@meal.Icon" Size="Size.Large" Color="Color.Primary" />
+
+                    <MudText Typo="Typo.h6" Class="mt-2">
+                        @meal.Name
+                    </MudText>
+
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        @meal.Calories kcal
+                    </MudText>
+
+                </MudPaper>
+
+            </MudItem>
+        }
+
+    </MudGrid>
+
+
+    <MudText Typo="Typo.h6" Class="mb-3">
+        今日建議食譜
+    </MudText>
+
+    <MudStack Spacing="2">
+
+        @foreach (var recipe in recipes)
+        {
+
+            <MudPaper Class="pa-4 rounded-xl d-flex align-center" Elevation="1">
+
+                <MudIcon Icon="@recipe.Icon" Size="Size.Large" Color="Color.Success" />
+
+                <div class="ml-4">
+
+                    <MudText Typo="Typo.subtitle1">
+                        @recipe.Title
+                    </MudText>
+
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        @recipe.Description
+                    </MudText>
+
+                </div>
+
+                <MudSpacer />
+
+                <MudChip T="string" Color="Color.Primary">
+                    @recipe.Calories kcal
+                </MudChip>
+
+            </MudPaper>
+
+        }
+
+    </MudStack>
+</MudContainer>
+
+
+@code {
+
+    class Meal
+    {
+        public string Name { get; set; }
+        public int Calories { get; set; }
+        public string Icon { get; set; }
+    }
+
+    List<Meal> meals = new()
+    {
+        new Meal { Name="早餐", Calories=320, Icon=Icons.Material.Filled.Coffee },
+        new Meal { Name="午餐", Calories=650, Icon=Icons.Material.Filled.SetMeal },
+        new Meal { Name="晚餐", Calories=280, Icon=Icons.Material.Filled.RamenDining },
+        new Meal { Name="點心", Calories=150, Icon=Icons.Material.Filled.BakeryDining }
+    };
+
+
+    class Recipe
+    {
+        public string Title { get; set; }
+        public string Description { get; set; }
+        public int Calories { get; set; }
+        public string Icon { get; set; }
+    }
+
+    List<Recipe> recipes = new()
+    {
+        // 🌟 修改這裡：將 Icon 改為 Icons.Material.Filled.Dining 或 Icons.Material.Rounded.Restaurant
+        new Recipe { Title="高蛋白早餐", Description="無糖豆漿 + 全麥吐司", Calories=320, Icon=Icons.Material.Filled.Dining },
+        new Recipe { Title="健康午餐", Description="清蒸魚 + 糙米飯 + 青菜", Calories=600, Icon=Icons.Material.Filled.Dining },
+        new Recipe { Title="低脂晚餐", Description="嫩豆腐 + 絲瓜", Calories=420, Icon=Icons.Material.Filled.Dining }
+    };
+
+}

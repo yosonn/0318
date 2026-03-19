@@ -1,0 +1,128 @@
+﻿@page "/diet-log/{Date}"
+@inject NavigationManager Nav
+
+<MudContainer MaxWidth="MaxWidth.Large">
+
+    <MudButton StartIcon="@Icons.Material.Filled.ArrowBack" Color="Color.Primary" OnClick="GoBack" Class="mb-4 px-0">
+        返回日期列表
+    </MudButton>
+
+    <MudText Typo="Typo.h4" Class="mb-6">
+        @Date 飲食紀錄
+    </MudText>
+
+    <MudPaper Class="pa-5 mb-8 rounded-xl" Elevation="2" Style="background-color: #F8FAF9; border-left: 6px solid #009688;">
+        <div class="d-flex align-center justify-space-between mb-3">
+            <MudText Typo="Typo.subtitle1" Color="Color.Default" Style="font-weight:bold;">當日攝取總計</MudText>
+            <MudText Typo="Typo.h4" Color="Color.Primary" Style="font-weight:bold;">
+                @TotalCalories.ToString("N0") <span style="font-size: 1rem; color: gray; font-weight: normal;">kcal</span>
+            </MudText>
+        </div>
+    
+        <MudDivider Class="mb-4" />
+    
+        <div class="d-flex justify-space-between text-center">
+            <div style="flex: 1;">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">早餐</MudText>
+                <MudText Typo="Typo.body2" Style="font-weight:bold;">@BreakfastCalories kcal</MudText>
+            </div>
+            <div style="flex: 1;">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">午餐</MudText>
+                <MudText Typo="Typo.body2" Style="font-weight:bold;">@LunchCalories kcal</MudText>
+            </div>
+            <div style="flex: 1;">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">晚餐</MudText>
+                <MudText Typo="Typo.body2" Style="font-weight:bold;">@DinnerCalories kcal</MudText>
+            </div>
+            <div style="flex: 1;">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">點心</MudText>
+                <MudText Typo="Typo.body2" Style="font-weight:bold;">@SnackCalories kcal</MudText>
+            </div>
+        </div>
+    </MudPaper>
+
+    @foreach (var category in new[] { "早餐", "午餐", "晚餐", "點心", "宵夜" })
+    {
+        // 從今天的餐點中，挑出屬於這個餐別的食物
+        var mealsInCategory = DailyMealList.Where(m => m.MealType == category).ToList();
+
+        // 如果這個餐別有紀錄，才顯示標題和卡片
+        @if (mealsInCategory.Any())
+        {
+            <MudText Typo="Typo.h5" Color="Color.Dark" Class="mt-8 mb-3">
+                <b>@category</b>
+            </MudText>
+
+            <MudGrid>
+                @foreach (var meal in mealsInCategory)
+                {
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudCard Style="cursor:pointer" Elevation="3" @onclick="() => OpenDetail(meal.Id)">
+                            <MudCardMedia Image="@meal.Image" Height="200" Style="object-fit: cover;" />
+                            <MudCardContent>
+                                <MudText Typo="Typo.h6">@meal.Name</MudText>
+                                <MudText Color="Color.Primary" Typo="Typo.subtitle1">
+                                    <b>@meal.Calories kcal</b>
+                                </MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                }
+            </MudGrid>
+        }
+    }
+
+    @if (!DailyMealList.Any())
+    {
+        <MudAlert Severity="Severity.Info" Class="mt-6">這一天沒有任何飲食紀錄</MudAlert>
+    }
+
+</MudContainer>
+
+@code {
+    [Parameter]
+    public string Date { get; set; }
+
+    class Meal
+    {
+        public int Id { get; set; }
+        public string Date { get; set; }
+        public string MealType { get; set; }
+        public string Name { get; set; }
+        public string Image { get; set; }
+        public int Calories { get; set; }
+    }
+
+    List<Meal> DailyMealList = new();
+
+    // 🌟 動態計算屬性：只要 DailyMealList 改變，這些數字就會自動重算
+    private int TotalCalories => DailyMealList.Sum(m => m.Calories);
+    private int BreakfastCalories => DailyMealList.Where(m => m.MealType == "早餐").Sum(m => m.Calories);
+    private int LunchCalories => DailyMealList.Where(m => m.MealType == "午餐").Sum(m => m.Calories);
+    private int DinnerCalories => DailyMealList.Where(m => m.MealType == "晚餐").Sum(m => m.Calories);
+    private int SnackCalories => DailyMealList.Where(m => m.MealType == "點心").Sum(m => m.Calories);
+
+    protected override void OnInitialized()
+    {
+        var allMeals = new List<Meal>
+        {
+            new Meal { Id = 4, Date = "2026-03-14", MealType = "早餐", Name = "無糖豆漿與地瓜", Image = "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?q=80&w=800&auto=format&fit=crop", Calories = 250 },
+            new Meal { Id = 1, Date = "2026-03-14", MealType = "午餐", Name = "煎鮭魚穀物飯", Image = "https://images.unsplash.com/photo-1467003909585-2f8a72700288?q=80&w=800&auto=format&fit=crop", Calories = 540 },
+            new Meal { Id = 5, Date = "2026-03-14", MealType = "點心", Name = "原味優格", Image = "https://images.unsplash.com/photo-1488477181946-6428a0291777?q=80&w=800&auto=format&fit=crop", Calories = 120 },
+            new Meal { Id = 2, Date = "2026-03-14", MealType = "晚餐", Name = "雞肉堅果沙拉", Image = "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=800&auto=format&fit=crop", Calories = 420 },
+            new Meal { Id = 3, Date = "2026-03-13", MealType = "晚餐", Name = "牛肉漢堡", Image = "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=800&auto=format&fit=crop", Calories = 650 }
+        };
+
+        DailyMealList = allMeals.Where(m => m.Date == Date).ToList();
+    }
+
+    void OpenDetail(int id)
+    {
+        Nav.NavigateTo($"/meal/{id}");
+    }
+
+    void GoBack()
+    {
+        Nav.NavigateTo("/diet-log");
+    }
+}

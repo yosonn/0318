@@ -1,0 +1,188 @@
+﻿@page "/meal/{Id:int}"
+@inject NavigationManager Nav
+
+<MudContainer MaxWidth="MaxWidth.Medium">
+
+    <MudButton StartIcon="@Icons.Material.Filled.ArrowBack"
+               Color="Color.Primary"
+               OnClick="GoBack"
+               Class="mb-4 px-0">
+        返回 @meal.Date 飲食日誌
+    </MudButton>
+
+    <MudText Typo="Typo.h4" Class="mb-4 d-flex align-center">
+        @meal.Name
+        <MudChip T="string" Color="Color.Secondary" Size="Size.Small" Class="ml-3">
+            @meal.MealType
+        </MudChip>
+    </MudText>
+
+    <MudCard Elevation="2" Class="rounded-lg">
+        <MudImage Src="@meal.Image"
+                  Fluid="true"
+                  Style="height: 450px; width: 100%;"
+                  ObjectFit="ObjectFit.Cover" />
+    </MudCard>
+
+    <MudText Typo="Typo.h6" Class="mt-6 mb-3">
+        營養資訊
+    </MudText>
+
+    <MudGrid>
+        <MudItem xs="6">
+            <MudPaper Class="pa-4 text-center">
+                <MudText Typo="Typo.caption">熱量</MudText>
+                <MudText Typo="Typo.h5" Color="Color.Primary">@meal.Calories kcal</MudText>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="6">
+            <MudPaper Class="pa-4 text-center">
+                <MudText Typo="Typo.caption">蛋白質</MudText>
+                <MudText Typo="Typo.h5">@meal.Protein g</MudText>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="6">
+            <MudPaper Class="pa-4 text-center">
+                <MudText Typo="Typo.caption">碳水</MudText>
+                <MudText Typo="Typo.h5">@meal.Carbs g</MudText>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="6">
+            <MudPaper Class="pa-4 text-center">
+                <MudText Typo="Typo.caption">脂肪</MudText>
+                <MudText Typo="Typo.h5">@meal.Fat g</MudText>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <MudDivider Class="my-6" />
+
+    <MudText Typo="Typo.subtitle2">
+        紀錄時間
+    </MudText>
+
+    <MudText Typo="Typo.body2">
+        @meal.Date @meal.Time
+    </MudText>
+
+    <MudText Typo="Typo.subtitle2" Class="mt-3">
+        AI辨識可信度
+    </MudText>
+
+    <MudChip T="string" Color="Color.Success">
+        92%
+    </MudChip>
+
+</MudContainer>
+
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    class Meal
+    {
+        public int Id { get; set; }
+        public string Date { get; set; }
+        public string Time { get; set; }
+        public string MealType { get; set; } // 🌟 新增：餐別
+        public string Name { get; set; }
+        public string Image { get; set; }
+        public int Calories { get; set; }
+        public int Protein { get; set; }
+        public int Carbs { get; set; }
+        public int Fat { get; set; }
+    }
+
+    // 🌟 同步更新：補上所有資料與網路圖片，保持前後頁資料一致
+    List<Meal> meals = new()
+    {
+        new Meal
+        {
+            Id = 4, // 🌟 新增的早餐
+            Date = "2026-03-14",
+            Time = "08:00",
+            MealType = "早餐",
+            Name = "無糖豆漿與地瓜",
+            Image = "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?q=80&w=800&auto=format&fit=crop",
+            Calories = 250,
+            Protein = 15,
+            Carbs = 40,
+            Fat = 5
+        },
+        new Meal
+        {
+            Id = 1,
+            Date = "2026-03-14",
+            Time = "12:30",
+            MealType = "午餐",
+            Name = "煎鮭魚穀物飯",
+            Image = "https://images.unsplash.com/photo-1467003909585-2f8a72700288?q=80&w=800&auto=format&fit=crop",
+            Calories = 540,
+            Protein = 32,
+            Carbs = 55,
+            Fat = 17
+        },
+        new Meal
+        {
+            Id = 5, // 🌟 新增的點心
+            Date = "2026-03-14",
+            Time = "15:30",
+            MealType = "點心",
+            Name = "原味優格",
+            Image = "https://images.unsplash.com/photo-1488477181946-6428a0291777?q=80&w=800&auto=format&fit=crop",
+            Calories = 120,
+            Protein = 10,
+            Carbs = 15,
+            Fat = 3
+        },
+        new Meal
+        {
+            Id = 2,
+            Date = "2026-03-14",
+            Time = "19:00",
+            MealType = "晚餐",
+            Name = "雞肉堅果沙拉",
+            Image = "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=800&auto=format&fit=crop",
+            Calories = 420,
+            Protein = 28,
+            Carbs = 20,
+            Fat = 15
+        },
+        new Meal
+        {
+            Id = 3,
+            Date = "2026-03-13",
+            Time = "18:30",
+            MealType = "晚餐",
+            Name = "牛肉漢堡",
+            Image = "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=800&auto=format&fit=crop",
+            Calories = 650,
+            Protein = 35,
+            Carbs = 40,
+            Fat = 30
+        }
+    };
+
+    Meal meal = new();
+
+    protected override void OnInitialized()
+    {
+        meal = meals.FirstOrDefault(x => x.Id == Id) ?? new Meal();
+    }
+
+    private void GoBack()
+    {
+        if (!string.IsNullOrEmpty(meal.Date))
+        {
+            Nav.NavigateTo($"/diet-log/{meal.Date}");
+        }
+        else
+        {
+            Nav.NavigateTo("/diet-log");
+        }
+    }
+}

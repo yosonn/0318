@@ -1,0 +1,195 @@
+﻿@page "/recognition"
+@inject NavigationManager NavManager
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-4 pb-16">
+    <MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4" Style="font-weight:bold;">影像辨識</MudText>
+
+    <style>
+            .custom-native-input:focus {
+                outline: none !important;
+                border-color: #009688 !important;
+                border-width: 2px !important;
+                box-shadow: none !important;
+            }
+    </style>
+
+    @if (!_showResult && !_showFinalSuccess)
+    {
+        <MudPaper Class="pa-8 d-flex flex-column align-center justify-center border-dashed mud-border-primary" Elevation="0" Height="300px" Style="border-width: 2px;">
+            <MudIcon Icon="@Icons.Material.Filled.CloudUpload" Size="Size.Large" Color="Color.Primary" />
+            <MudText Typo="Typo.h6" Class="mt-4">上傳食物照片</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">系統將自動分析相片中的食材</MudText>
+
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-6" StartIcon="@Icons.Material.Filled.CameraAlt" OnClick="SimulateUpload">
+                開啟相機 / 上傳
+            </MudButton>
+        </MudPaper>
+    }
+    else if (_showResult && !_showFinalSuccess)
+    {
+        <MudCard Elevation="3" Class="rounded-xl">
+            <MudCardMedia Image="@_previewImage" Height="200" />
+            
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Color="Color.Primary" Class="mb-2">AI 初步辨識結果</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-6">
+                    請確認系統辨識出的食材。若有遺漏或錯誤，您可以直接點擊欄位手動修改或補充：
+                </MudText>
+
+                <MudStack Spacing="3">
+                    
+                    <div class="d-flex gap-3">
+                        <div class="d-flex flex-column" style="flex: 1;">
+                            <label style="font-size: 12px; color: gray; margin-bottom: 4px;">紀錄日期</label>
+                            <input class="custom-native-input" type="date" @bind="_mealDate" @bind:format="yyyy-MM-dd" style="padding: 13.5px 14px; border: 1px solid #c4c4c4; border-radius: 4px; font-size: 16px; background-color: white; font-family: inherit; color: #424242; transition: border-color 0.2s;" />
+                        </div>
+
+                        <div class="d-flex flex-column" style="flex: 1;">
+                            <label style="font-size: 12px; color: gray; margin-bottom: 4px;">餐別</label>
+                            <select class="custom-native-input" @bind="_mealType" style="appearance: none; -webkit-appearance: none; background-color: white; border: 1px solid #c4c4c4; border-radius: 4px; font-size: 16px; padding: 14px 40px 14px 14px; background-image: url('data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\'><path fill=\'gray\' d=\'M7 10l5 5 5-5z\'/></svg>'); background-repeat: no-repeat; background-position: right 16px center; cursor: pointer; color: #424242; transition: border-color 0.2s;">
+                                <option value="早餐">早餐</option>
+                                <option value="午餐">午餐</option>
+                                <option value="晚餐">晚餐</option>
+                                <option value="點心">點心</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-column">
+                        <label style="font-size: 12px; color: gray; margin-bottom: 4px;">餐點名稱</label>
+                        <input class="custom-native-input" type="text" @bind="_foodName" style="padding: 14px; border: 1px solid #c4c4c4; border-radius: 4px; font-size: 16px; background-color: white; font-family: inherit; color: #424242; transition: border-color 0.2s;" />
+                    </div>
+                    
+                    <div class="d-flex flex-column">
+                        <label style="font-size: 12px; color: gray; margin-bottom: 4px;">辨識食材 (可手動修改/新增)</label>
+                        <textarea class="custom-native-input" @bind="_ingredients" rows="3" style="padding: 14px; border: 1px solid #c4c4c4; border-radius: 4px; font-size: 16px; background-color: white; font-family: inherit; color: #424242; transition: border-color 0.2s; resize: none;"></textarea>
+                    </div>
+                    
+                    <div class="d-flex flex-column">
+                        <label style="font-size: 12px; color: gray; margin-bottom: 4px;">攝取份量</label>
+                        <select class="custom-native-input" @bind="_portion" style="appearance: none; -webkit-appearance: none; background-color: white; border: 1px solid #c4c4c4; border-radius: 4px; font-size: 16px; padding: 14px 40px 14px 14px; background-image: url('data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\'><path fill=\'gray\' d=\'M7 10l5 5 5-5z\'/></svg>'); background-repeat: no-repeat; background-position: right 16px center; cursor: pointer; color: #424242; transition: border-color 0.2s;">
+                            <option value="1/2 份">1/2 份</option>
+                            <option value="1 份">1 份</option>
+                            <option value="2 份">2 份</option>
+                            <option value="3 份">3 份</option>
+                        </select>
+                    </div>
+
+                    <div class="d-flex flex-column">
+                        <label style="font-size: 12px; color: gray; margin-bottom: 4px;">備註 / 補充資訊 (例如：半糖、去冰、少油)</label>
+                        <textarea class="custom-native-input" @bind="_notes" rows="3" style="padding: 14px; border: 1px solid #c4c4c4; border-radius: 4px; font-size: 16px; background-color: white; font-family: inherit; color: #424242; transition: border-color 0.2s; resize: none;"></textarea>
+                    </div>
+
+                </MudStack>
+            </MudCardContent>
+
+            <MudCardActions Class="d-flex justify-space-between pa-4">
+                <MudButton Variant="Variant.Text" Color="Color.Default" OnClick="ResetUpload">重新上傳</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" DisableElevation="true" OnClick="SaveAndShowResult">確認並儲存</MudButton>
+            </MudCardActions>
+        </MudCard>
+    }
+    else if (_showFinalSuccess)
+    {
+        <MudCard Elevation="3" Class="rounded-xl text-center pa-8">
+            <MudText Typo="Typo.h5" Style="font-weight:bold;" Class="mb-2">紀錄成功！</MudText>
+            
+            <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-6">
+                您已將 <b>@_foodName</b> (@_portion) <br /> 寫入 <b>@(_mealDate.ToString("yyyy-MM-dd"))</b> 的 <b>@_mealType</b> 紀錄中。
+            </MudText>
+
+            <MudPaper Elevation="0" Class="pa-6 mb-8 rounded-lg" Style="background-color: #F5F7F9;">
+                <MudText Typo="Typo.subtitle2" Color="Color.Secondary">本次攝取預估總熱量</MudText>
+                <MudText Typo="Typo.h2" Color="Color.Primary" Style="font-weight:bold;" Class="my-2">
+                    @_calculatedCalories <span style="font-size:1.2rem;">kcal</span>
+                </MudText>
+                
+                <MudDivider Class="my-3" />
+                
+                <div class="d-flex justify-space-around">
+                    <div>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">蛋白質</MudText>
+                        <MudText Typo="Typo.body1" Style="font-weight:bold;">@_calculatedProtein g</MudText>
+                    </div>
+                    <div>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">碳水</MudText>
+                        <MudText Typo="Typo.body1" Style="font-weight:bold;">@_calculatedCarbs g</MudText>
+                    </div>
+                    <div>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">脂肪</MudText>
+                        <MudText Typo="Typo.body1" Style="font-weight:bold;">@_calculatedFat g</MudText>
+                    </div>
+                </div>
+            </MudPaper>
+
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" FullWidth="true" OnClick='() => NavManager.NavigateTo("")'>
+                回首頁看儀表板
+            </MudButton>
+        </MudCard>
+    }
+</MudContainer>
+
+@code {
+    private bool _showResult = false;
+    private bool _showFinalSuccess = false;
+    
+    private string _previewImage = "";
+    private DateTime _mealDate = DateTime.Today;
+    private string _mealType = "午餐";
+    
+    private string _foodName = "";
+    private string _ingredients = "";
+    private string _portion = "1 份";
+    private string _notes = "";
+
+    private int _calculatedCalories = 0;
+    private int _calculatedProtein = 0;
+    private int _calculatedCarbs = 0;
+    private int _calculatedFat = 0;
+
+    private void SimulateUpload()
+    {
+        _previewImage = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=800&auto=format&fit=crop";
+        _foodName = "健康舒肥雞胸肉沙拉";
+        _ingredients = "雞胸肉, 蘿蔓生菜, 小番茄, 紫高麗菜, 核桃";
+        _mealDate = DateTime.Today;
+        _mealType = "午餐";
+        _portion = "1 份";
+        _notes = "";
+
+        _showResult = true;
+        _showFinalSuccess = false;
+    }
+
+    private void SaveAndShowResult()
+    {
+        int baseCalories = 350;
+        int baseProtein = 30;
+        int baseCarbs = 15;
+        int baseFat = 10;
+
+        double multiplier = 1.0;
+        if (_portion == "1/2 份") multiplier = 0.5;
+        else if (_portion == "2 份") multiplier = 2.0;
+        else if (_portion == "3 份") multiplier = 3.0;
+
+        _calculatedCalories = (int)(baseCalories * multiplier);
+        _calculatedProtein = (int)(baseProtein * multiplier);
+        _calculatedCarbs = (int)(baseCarbs * multiplier);
+        _calculatedFat = (int)(baseFat * multiplier);
+
+        _showFinalSuccess = true;
+    }
+
+    private void ResetUpload()
+    {
+        _showResult = false;
+        _showFinalSuccess = false;
+        _mealDate = DateTime.Today;
+        _mealType = "午餐";
+        _foodName = "";
+        _ingredients = "";
+        _portion = "1 份";
+        _notes = "";
+    }
+}

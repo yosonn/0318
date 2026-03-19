@@ -1,0 +1,78 @@
+﻿@page "/profile"
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8 pb-16">
+
+    <div class="d-flex align-center mb-10">
+        <MudAvatar Style="height:80px; width:80px; font-size:2rem; background-color:#00695C; color:white;">吳</MudAvatar>
+        <div class="ml-4">
+            <MudText Typo="Typo.h4" Style="font-weight:bold; color:#37474f;">吳宥辰 (Yu-Chen)</MudText>
+            <MudText Typo="Typo.body1" Style="color:#757575;" Class="mt-1">
+                20 歲 | 國立東華大學 | 男性
+            </MudText>
+        </div>
+    </div>
+
+    <div class="d-flex align-center mb-6">
+        <div style="width: 5px; height: 28px; background-color: #009688; margin-right: 12px; border-radius: 2px;"></div>
+        <MudText Typo="Typo.h5" Style="color: #37474f; font-weight:bold;">生理數據與指標</MudText>
+    </div>
+
+    <MudGrid Spacing="3" Class="mb-8">
+        @foreach (var item in healthMetrics)
+        {
+            <MudItem xs="6" sm="4" md="2">
+                <MudPaper Class="pa-4 rounded-lg d-flex flex-column align-center justify-space-between" Elevation="1" Style="height: 130px; width: 100%;">
+                    
+                    <MudText Typo="Typo.caption" Style="color:#9E9E9E; text-align:center; line-height: 1.2;">@item.Title</MudText>
+
+                    <div class="d-flex align-end my-1">
+                        <MudText Typo="Typo.h5" Style="@($"color:{item.ColorCode}; font-weight:bold; line-height:1;")">@item.Value</MudText>
+                        <MudText Typo="Typo.caption" Class="ml-1 mb-1" Style="color:#BDBDBD;">@item.Unit</MudText>
+                    </div>
+
+                    <MudProgressLinear Value="@item.ProgressValue"
+                                       Color="@item.ColorType"
+                                       Size="Size.Medium"
+                                       Class="rounded-xl w-100"
+                                       Style="height: 6px;" />
+                </MudPaper>
+            </MudItem>
+        }
+    </MudGrid>
+
+    <MudPaper Class="pa-6 rounded-lg d-flex align-start" Elevation="1" Style="border-left: 6px solid #FF9800;">
+        <div class="mr-4 mt-1">
+            <MudIcon Icon="@Icons.Material.Filled.MedicalServices" Color="Color.Warning" Size="Size.Large" />
+        </div>
+
+        <div>
+            <MudText Typo="Typo.subtitle1" Style="font-weight:bold; color:#424242;">慢性病管理提示</MudText>
+            <MudText Typo="Typo.body2" Class="mt-1" Style="color:#616161; line-height: 1.6;">
+                您的尿酸值偏高，建議每日飲水量需達到 2,500cc，並嚴格限制高普林食物（如內臟、帶殼海鮮）的攝取。
+            </MudText>
+        </div>
+    </MudPaper>
+
+</MudContainer>
+
+@code {
+    public class HealthMetricItem
+    {
+        public string Title { get; set; } = "";
+        public string Value { get; set; } = "";
+        public string Unit { get; set; } = "";
+        public double ProgressValue { get; set; }
+        public Color ColorType { get; set; }
+        public string ColorCode { get; set; } = "";
+    }
+
+    List<HealthMetricItem> healthMetrics = new List<HealthMetricItem>
+    {
+        new HealthMetricItem { Title = "BMI 指數", Value = "22.4", Unit = "kg/m²", ProgressValue = 50, ColorType = Color.Success, ColorCode = "#009688" },
+        new HealthMetricItem { Title = "血壓 (收縮/舒張)", Value = "128 / 84", Unit = "mmHg", ProgressValue = 70, ColorType = Color.Warning, ColorCode = "#009688" },
+        new HealthMetricItem { Title = "空腹血糖", Value = "98", Unit = "mg/dL", ProgressValue = 45, ColorType = Color.Success, ColorCode = "#009688" },
+        // ❌ 這裡已經將 HbA1c 糖化血色素 刪除了
+        new HealthMetricItem { Title = "總膽固醇", Value = "192", Unit = "mg/dL", ProgressValue = 75, ColorType = Color.Warning, ColorCode = "#009688" },
+        new HealthMetricItem { Title = "尿酸值", Value = "7.2", Unit = "mg/dL", ProgressValue = 90, ColorType = Color.Error, ColorCode = "#009688" }
+    };
+}
