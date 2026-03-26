@@ -118,28 +118,23 @@
 
 @code {
 
-    class Meal
-    {
-        public string Name { get; set; }
-        public int Calories { get; set; }
-        public string Icon { get; set; }
-    }
+    
 
-    List<Meal> meals = new()
+    List<MealRecord> meals = new()
     {
-        new Meal { Name="早餐", Calories=320, Icon=Icons.Material.Filled.Coffee },
-        new Meal { Name="午餐", Calories=650, Icon=Icons.Material.Filled.SetMeal },
-        new Meal { Name="晚餐", Calories=280, Icon=Icons.Material.Filled.RamenDining },
-        new Meal { Name="點心", Calories=150, Icon=Icons.Material.Filled.BakeryDining }
+        new MealRecord { Name="早餐", Calories=320, Icon=Icons.Material.Filled.Coffee },
+        new MealRecord { Name="午餐", Calories=650, Icon=Icons.Material.Filled.SetMeal },
+        new MealRecord{ Name="晚餐", Calories=280, Icon=Icons.Material.Filled.RamenDining },
+        new MealRecord{ Name="點心", Calories=150, Icon=Icons.Material.Filled.BakeryDining }
     };
 
 
     class Recipe
     {
-        public string Title { get; set; }
-        public string Description { get; set; }
+        public string Title { get; set; } = "";
+        public string Description { get; set; } = "";
         public int Calories { get; set; }
-        public string Icon { get; set; }
+        public string Icon { get; set; } = "";
     }
 
     List<Recipe> recipes = new()

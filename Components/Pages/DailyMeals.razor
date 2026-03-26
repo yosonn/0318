@@ -1,4 +1,5 @@
 ﻿@page "/diet-log/{Date}"
+@inject HNM.Services.NutritionService NutritionService
 @inject NavigationManager Nav
 
 <MudContainer MaxWidth="MaxWidth.Large">
@@ -81,19 +82,11 @@
 
 @code {
     [Parameter]
-    public string Date { get; set; }
+    public string Date { get; set; } = "";
 
-    class Meal
-    {
-        public int Id { get; set; }
-        public string Date { get; set; }
-        public string MealType { get; set; }
-        public string Name { get; set; }
-        public string Image { get; set; }
-        public int Calories { get; set; }
-    }
+    
 
-    List<Meal> DailyMealList = new();
+    List<MealRecord> DailyMealList = new();
 
     // 🌟 動態計算屬性：只要 DailyMealList 改變，這些數字就會自動重算
     private int TotalCalories => DailyMealList.Sum(m => m.Calories);
@@ -104,15 +97,10 @@
 
     protected override void OnInitialized()
     {
-        var allMeals = new List<Meal>
-        {
-            new Meal { Id = 4, Date = "2026-03-14", MealType = "早餐", Name = "無糖豆漿與地瓜", Image = "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?q=80&w=800&auto=format&fit=crop", Calories = 250 },
-            new Meal { Id = 1, Date = "2026-03-14", MealType = "午餐", Name = "煎鮭魚穀物飯", Image = "https://images.unsplash.com/photo-1467003909585-2f8a72700288?q=80&w=800&auto=format&fit=crop", Calories = 540 },
-            new Meal { Id = 5, Date = "2026-03-14", MealType = "點心", Name = "原味優格", Image = "https://images.unsplash.com/photo-1488477181946-6428a0291777?q=80&w=800&auto=format&fit=crop", Calories = 120 },
-            new Meal { Id = 2, Date = "2026-03-14", MealType = "晚餐", Name = "雞肉堅果沙拉", Image = "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=800&auto=format&fit=crop", Calories = 420 },
-            new Meal { Id = 3, Date = "2026-03-13", MealType = "晚餐", Name = "牛肉漢堡", Image = "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=800&auto=format&fit=crop", Calories = 650 }
-        };
+        // 直接向中央服務要求所有資料
+        var allMeals = NutritionService.GetAllMeals();
 
+        // 根據網址傳進來的 Date 參數進行篩選
         DailyMealList = allMeals.Where(m => m.Date == Date).ToList();
     }
 

@@ -1,4 +1,5 @@
 ﻿@page "/recognition"
+@inject HNM.Services.NutritionService NutritionService
 @inject NavigationManager NavManager
 
 <MudContainer MaxWidth="MaxWidth.Small" Class="mt-4 pb-16">
@@ -89,42 +90,38 @@
             </MudCardActions>
         </MudCard>
     }
+    @* Recognition.razor *@
     else if (_showFinalSuccess)
     {
         <MudCard Elevation="3" Class="rounded-xl text-center pa-8">
             <MudText Typo="Typo.h5" Style="font-weight:bold;" Class="mb-2">紀錄成功！</MudText>
-            
+
             <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-6">
                 您已將 <b>@_foodName</b> (@_portion) <br /> 寫入 <b>@(_mealDate.ToString("yyyy-MM-dd"))</b> 的 <b>@_mealType</b> 紀錄中。
             </MudText>
 
-            <MudPaper Elevation="0" Class="pa-6 mb-8 rounded-lg" Style="background-color: #F5F7F9;">
-                <MudText Typo="Typo.subtitle2" Color="Color.Secondary">本次攝取預估總熱量</MudText>
-                <MudText Typo="Typo.h2" Color="Color.Primary" Style="font-weight:bold;" Class="my-2">
-                    @_calculatedCalories <span style="font-size:1.2rem;">kcal</span>
-                </MudText>
-                
-                <MudDivider Class="my-3" />
-                
-                <div class="d-flex justify-space-around">
-                    <div>
-                        <MudText Typo="Typo.caption" Color="Color.Secondary">蛋白質</MudText>
-                        <MudText Typo="Typo.body1" Style="font-weight:bold;">@_calculatedProtein g</MudText>
-                    </div>
-                    <div>
-                        <MudText Typo="Typo.caption" Color="Color.Secondary">碳水</MudText>
-                        <MudText Typo="Typo.body1" Style="font-weight:bold;">@_calculatedCarbs g</MudText>
-                    </div>
-                    <div>
-                        <MudText Typo="Typo.caption" Color="Color.Secondary">脂肪</MudText>
-                        <MudText Typo="Typo.body1" Style="font-weight:bold;">@_calculatedFat g</MudText>
-                    </div>
-                </div>
-            </MudPaper>
+            @* ... 營養數值顯示區塊維持不變 ... *@
 
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" FullWidth="true" OnClick='() => NavManager.NavigateTo("")'>
-                回首頁看儀表板
-            </MudButton>
+            <MudStack Spacing="2" Class="mt-6">
+                @* 🌟 1. 主要動作：改為 Primary (綠色) *@
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           Size="Size.Large"
+                           FullWidth="true"
+                           OnClick="GoToMealDetail"
+                           Style="font-weight:bold;">
+                    查看本次紀錄詳情
+                </MudButton>
+
+                @* 🌟 2. 次要動作：改為 Outlined (外框)，增加視覺層次 *@
+                <MudButton Variant="Variant.Outlined"
+                           Color="Color.Primary"
+                           Size="Size.Large"
+                           FullWidth="true"
+                           OnClick='() => NavManager.NavigateTo("")'>
+                    回首頁看儀表板
+                </MudButton>
+            </MudStack>
         </MudCard>
     }
 </MudContainer>
@@ -147,6 +144,8 @@
     private int _calculatedCarbs = 0;
     private int _calculatedFat = 0;
 
+    private int _latestMealId; // 🌟 用來儲存剛存入的紀錄 ID
+
     private void SimulateUpload()
     {
         _previewImage = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=800&auto=format&fit=crop";
@@ -163,6 +162,7 @@
 
     private void SaveAndShowResult()
     {
+        // 1. 計算倍率 (這部分維持你原本的優秀邏輯)
         int baseCalories = 350;
         int baseProtein = 30;
         int baseCarbs = 15;
@@ -178,7 +178,37 @@
         _calculatedCarbs = (int)(baseCarbs * multiplier);
         _calculatedFat = (int)(baseFat * multiplier);
 
+        // 🌟 2. 建立一個真正的紀錄物件
+        var newMeal = new MealRecord
+        {
+            Date = _mealDate.ToString("yyyy-MM-dd"),
+            Time = DateTime.Now.ToString("HH:mm"),
+            MealType = _mealType,
+            Name = _foodName,
+            Image = _previewImage, // 這裡會存入模擬的 Unsplash 圖片網址
+            Calories = _calculatedCalories,
+            Protein = _calculatedProtein,
+            Carbs = _calculatedCarbs,
+            Fat = _calculatedFat,
+            Ingredients = _ingredients,
+            Notes = _notes,
+            Icon = _mealType == "早餐" ? Icons.Material.Filled.Coffee : Icons.Material.Filled.SetMeal
+        };
+
+        // 🌟 呼叫 Service 存檔並取得回傳的物件 (假設 Service 會幫我們產生 ID)
+        NutritionService.AddMeal(newMeal);
+
+        // 取得該筆紀錄在 List 中的 Id (或是你在 Service 裡設計讓 AddMeal 回傳 Id)
+        _latestMealId = newMeal.Id;
+
+        // 4. 顯示成功畫面
         _showFinalSuccess = true;
+    }
+
+    private void GoToMealDetail()
+    {
+        // 🌟 根據紀錄的 Id 跳轉到詳細頁面
+        NavManager.NavigateTo($"/meal/{_latestMealId}");
     }
 
     private void ResetUpload()
