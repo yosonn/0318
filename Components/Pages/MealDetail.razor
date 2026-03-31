@@ -100,6 +100,19 @@
         </MudChip>
     </div>
 
+
+    @* 🌟 這裡新增刪除按鈕 *@
+    <MudDivider Class="my-8" />
+    <MudButton Variant="Variant.Filled"
+               Color="Color.Error"
+               Size="Size.Large"
+               FullWidth="true"
+               StartIcon="@Icons.Material.Filled.Delete"
+               OnClick="DeleteRecord"
+               Class="mb-6">
+        刪除此筆紀錄
+    </MudButton>
+
 </MudContainer>
 
 
@@ -107,7 +120,6 @@
     [Parameter]
     public int Id { get; set; }
     
-
     MealRecord meal = new();
 
     protected override void OnInitialized()
@@ -118,6 +130,24 @@
 
     private void GoBack()
     {
+        if (!string.IsNullOrEmpty(meal.Date))
+        {
+            Nav.NavigateTo($"/diet-log/{meal.Date}");
+        }
+        else
+        {
+            Nav.NavigateTo("/diet-log");
+        }
+    }
+
+    // 🌟 這裡新增刪除方法
+    private void DeleteRecord()
+    {
+        // 1. 呼叫 Service 刪除這筆資料
+        // (注意：請確認你的 NutritionService 裡面有寫好 DeleteMeal 或是 RemoveMeal 的方法)
+        NutritionService.DeleteMeal(Id);
+
+        // 2. 刪除後跳轉回該日期的日誌頁面
         if (!string.IsNullOrEmpty(meal.Date))
         {
             Nav.NavigateTo($"/diet-log/{meal.Date}");

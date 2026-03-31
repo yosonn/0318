@@ -1,4 +1,5 @@
 ﻿using HNM.Models;
+using static MudBlazor.Colors;
 
 namespace HNM.Services
 {
@@ -28,6 +29,15 @@ namespace HNM.Services
         {
             meal.Id = _meals.Any() ? _meals.Max(m => m.Id) + 1 : 1;
             _meals.Add(meal);
+        }
+        public void DeleteMeal(int id)
+        {
+            // 假設你的清單叫做 Meals，就把小寫 meals 改成 Meals
+            var mealToRemove = _meals.FirstOrDefault(m => m.Id == id);
+            if (mealToRemove != null)
+            {
+                _meals.Remove(mealToRemove);
+            }
         }
     }
 }

@@ -94,15 +94,17 @@
     else if (_showFinalSuccess)
     {
         <MudCard Elevation="3" Class="rounded-xl text-center pa-8">
+            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Large" Color="Color.Success" Class="mb-4" Style="font-size: 60px;" />
+            
             <MudText Typo="Typo.h5" Style="font-weight:bold;" Class="mb-2">紀錄成功！</MudText>
 
-            <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">
+            <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-6">
                 您已在 <b>@(_mealDate.ToString("yyyy-MM-dd"))</b> 的 <b>@_mealType</b> 累積紀錄了 <b>@_sessionRecords.Count</b> 筆餐點。
             </MudText>
 
-            @* 🌟 顯示這次連續拍照紀錄的所有餐點，讓使用者安心 *@
+            @* 本次餐點簡略清單 *@
             <div class="text-left pa-4 mb-6 rounded" style="background-color: #f9f9f9; border: 1px solid #e0e0e0;">
-                <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-2" Style="font-weight:bold;">本次上傳清單：</MudText>
+                <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-2" Style="font-weight:bold;">本次上傳：</MudText>
                 <MudStack Spacing="1">
                     @foreach (var meal in _sessionRecords)
                     {
@@ -111,8 +113,26 @@
                 </MudStack>
             </div>
 
+            @* 🌟 這裡新增 AI 分析營養建議卡片 🌟 *@
+            @if (!string.IsNullOrEmpty(_aiSuggestion))
+            {
+                <MudPaper Class="pa-5 mb-8 text-left border-dashed"
+                          Style="border-color: #009688; border-width: 2px; background-color: #f0fdfa; border-radius: 16px;">
+                    <div class="d-flex align-center mb-3">
+                        @* 這裡使用一個閃亮或燈泡的圖示代表 AI *@
+                        <MudIcon Icon="@Icons.Material.Filled.AutoAwesome" Color="Color.Primary" Class="mr-2" />
+                        <MudText Typo="Typo.subtitle1" Style="font-weight:bold;" Color="Color.Primary">AI 智慧營養分析</MudText>
+                    </div>
+                    
+                    @* 修正紀錄時間字體 *@
+                    <MudText Typo="Typo.body2" Color="Color.Primary" Style="line-height: 1.6; white-space: pre-wrap;">
+                        @_aiSuggestion
+                    </MudText>
+                </MudPaper>
+            }
+
             <MudStack Spacing="2" Class="mt-2">
-                @* 1. 繼續拍照 *@
+                @* 1. 主要動作：繼續拍照 *@
                 <MudButton Variant="Variant.Filled"
                            Color="Color.Primary"
                            Size="Size.Large"
@@ -122,7 +142,7 @@
                     繼續拍照 (下一道菜)
                 </MudButton>
 
-                @* 2. 看該餐總覽 *@
+                @* 2. 次要動作：看該日總覽 *@
                 <MudButton Variant="Variant.Outlined"
                            Color="Color.Primary"
                            Size="Size.Large"
@@ -153,9 +173,11 @@
     private int _calculatedCarbs = 0;
     private int _calculatedFat = 0;
 
+    // 🌟 1. 新增存放 AI 建議文字的變數
+    private string _aiSuggestion = "";
+
     private int _latestMealId;
 
-    // 🌟 新增的 List，用來記錄「這次連續拍照」所有新增的餐點
     private List<MealRecord> _sessionRecords = new List<MealRecord>();
 
     private void SimulateUpload()
@@ -174,7 +196,7 @@
 
     private void SaveAndShowResult()
     {
-        // 1. 計算倍率
+        // ... (計算倍率邏輯維持不變) ...
         int baseCalories = 350;
         int baseProtein = 30;
         int baseCarbs = 15;
@@ -190,7 +212,7 @@
         _calculatedCarbs = (int)(baseCarbs * multiplier);
         _calculatedFat = (int)(baseFat * multiplier);
 
-        // 2. 建立紀錄物件
+        // ... (建立紀錄物件邏輯維持不變) ...
         var newMeal = new MealRecord
         {
             Date = _mealDate.ToString("yyyy-MM-dd"),
@@ -204,16 +226,21 @@
             Fat = _calculatedFat,
             Ingredients = _ingredients,
             Notes = _notes,
-            Icon = _mealType == "早餐" ? Icons.Material.Filled.Coffee : Icons.Material.Filled.SetMeal
+            Icon = _mealType == "早餐" ? Icons.Material.Filled.Coffee : Icons.Material.Filled.SetMeal,
+            Confidence = 0.95 // 模擬一個可信度
         };
 
         // 3. 呼叫 Service 存檔
         NutritionService.AddMeal(newMeal);
 
-        // 4. 將剛剛存入的紀錄加入到暫存清單中，方便在畫面上顯示
+        // 4. 加入暫存清單
         _sessionRecords.Add(newMeal);
 
-        // 5. 顯示成功畫面
+        // 🌟 5. 呼叫模擬產生器，產生 AI 建議
+        // 在真實世界中，這裡會是非同步呼叫後端 API (例如 OpenAI)
+        _aiSuggestion = GenerateSimulatedAiAdvice(newMeal);
+
+        // 6. 顯示成功畫面
         _showFinalSuccess = true;
     }
 
@@ -222,22 +249,86 @@
         _showResult = false;
         _showFinalSuccess = false;
         
-        // 🌟 注意：這裡刻意不重置 _mealDate 和 _mealType！
-        // 這樣使用者「繼續拍照」時，系統就會預設他們還在拍「同一天的同一餐」，不用重新選。
+        // 保留日期和餐別
         
         _foodName = "";
         _ingredients = "";
         _portion = "1 份";
         _notes = "";
         _previewImage = "";
+
+        // 🌟 7. 重置上傳時，也要清空 AI 建議
+        _aiSuggestion = "";
     }
 
     private void GoToMealSummary()
     {
-        // 🌟 將當前紀錄的日期轉換為 "yyyy-MM-dd" 格式
         string dateString = _mealDate.ToString("yyyy-MM-dd");
-        
-        // 🌟 直接跳轉到飲食日誌的對應日期頁面
         NavManager.NavigateTo($"/diet-log/{dateString}");
+    }
+
+    // 🌟 8. 實作「AI 分析模擬器」
+    // 根據食材關鍵字和營養數值，提供結構化的建議
+    private string GenerateSimulatedAiAdvice(MealRecord meal)
+    {
+        if (string.IsNullOrEmpty(meal.Ingredients)) return "無法取得食材資訊進行分析。";
+
+        string ingredients = meal.Ingredients.ToLower();
+        var adviceParts = new List<string>();
+
+        // (1) 優點分析
+        adviceParts.Add("✅ **本次餐點優點：**");
+        bool hasGoodElement = false;
+        if (ingredients.Contains("雞胸肉") || ingredients.Contains("魚") || ingredients.Contains("蛋"))
+        {
+            adviceParts.Add("- 含有優質蛋白質來源，有助於肌肉組織修復。");
+            hasGoodElement = true;
+        }
+        if (ingredients.Contains("生菜") || ingredients.Contains("蔬菜") || ingredients.Contains("花椰菜") || ingredients.Contains("青菜"))
+        {
+            adviceParts.Add("- 豐富的蔬菜提供膳食纖維，能增加飽足感並促進腸道健康。");
+            hasGoodElement = true;
+        }
+        if (ingredients.Contains("核桃") || ingredients.Contains("堅果") || ingredients.Contains("橄欖油"))
+        {
+            adviceParts.Add("- 包含健康的油脂（不飽和脂肪酸），對心血管有益。");
+            hasGoodElement = true;
+        }
+        if (!hasGoodElement) adviceParts.Add("- 完成了餐點紀錄，是通往健康的第一步！");
+
+        adviceParts.Add(""); // 換行
+
+        // (2) 營養師微調建議
+        adviceParts.Add("💡 **微調小建議：**");
+        
+        // 根據熱量判斷
+        if (meal.Calories > 800 && meal.MealType != "晚餐")
+        {
+            adviceParts.Add("- 這餐熱量稍高，下一餐可以適度減少澱粉攝取。");
+        }
+        else if (meal.Calories < 300 && meal.MealType != "點心")
+        {
+            adviceParts.Add("- 此餐熱量偏低，若感到飢餓，建議補充一顆茶葉蛋或無糖豆漿。");
+        }
+
+        // 根據食材缺口判斷 (這裡只是簡單示範)
+        bool lackVeg = !ingredients.Contains("菜") && !ingredients.Contains("沙拉") && !ingredients.Contains("花椰菜");
+        bool lackProt = !ingredients.Contains("肉") && !ingredients.Contains("魚") && !ingredients.Contains("蛋") && !ingredients.Contains("豆");
+
+        if (lackVeg) adviceParts.Add("- 建議這餐可以加點一份燙青菜，增加纖維攝取。");
+        if (lackProt) adviceParts.Add("- 建議補點蛋白質（如豆腐或蛋），讓營養更均衡。");
+        if (ingredients.Contains("炸") || ingredients.Contains("勾芡")) adviceParts.Add("- 發現含有勾芡或油炸食材，下次可嘗試清蒸或滷的烹調方式。");
+
+        // 如果備註有特殊狀況
+        if (!string.IsNullOrEmpty(meal.Notes) && (meal.Notes.Contains("少油") || meal.Notes.Contains("去冰")))
+        {
+            adviceParts.Add($"- 您的特殊要求【{meal.Notes}】是非常棒的健康選擇！");
+        }
+
+        // (3) 結尾鼓勵
+        adviceParts.Add(""); // 換行
+        adviceParts.Add("✨ 繼續保持紀錄的習慣，加油！");
+
+        return string.Join("\n", adviceParts);
     }
 }
