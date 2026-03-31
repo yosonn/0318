@@ -96,30 +96,39 @@
         <MudCard Elevation="3" Class="rounded-xl text-center pa-8">
             <MudText Typo="Typo.h5" Style="font-weight:bold;" Class="mb-2">紀錄成功！</MudText>
 
-            <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-6">
-                您已將 <b>@_foodName</b> (@_portion) <br /> 寫入 <b>@(_mealDate.ToString("yyyy-MM-dd"))</b> 的 <b>@_mealType</b> 紀錄中。
+            <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">
+                您已在 <b>@(_mealDate.ToString("yyyy-MM-dd"))</b> 的 <b>@_mealType</b> 累積紀錄了 <b>@_sessionRecords.Count</b> 筆餐點。
             </MudText>
 
-            @* ... 營養數值顯示區塊維持不變 ... *@
+            @* 🌟 顯示這次連續拍照紀錄的所有餐點，讓使用者安心 *@
+            <div class="text-left pa-4 mb-6 rounded" style="background-color: #f9f9f9; border: 1px solid #e0e0e0;">
+                <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-2" Style="font-weight:bold;">本次上傳清單：</MudText>
+                <MudStack Spacing="1">
+                    @foreach (var meal in _sessionRecords)
+                    {
+                        <MudText Typo="Typo.body2">✔️ @meal.Name (@meal.Calories kcal)</MudText>
+                    }
+                </MudStack>
+            </div>
 
-            <MudStack Spacing="2" Class="mt-6">
-                @* 🌟 1. 主要動作：改為 Primary (綠色) *@
+            <MudStack Spacing="2" Class="mt-2">
+                @* 1. 繼續拍照 *@
                 <MudButton Variant="Variant.Filled"
                            Color="Color.Primary"
                            Size="Size.Large"
                            FullWidth="true"
-                           OnClick="GoToMealDetail"
+                           OnClick="ResetUpload"
                            Style="font-weight:bold;">
-                    查看本次紀錄詳情
+                    繼續拍照 (下一道菜)
                 </MudButton>
 
-                @* 🌟 2. 次要動作：改為 Outlined (外框)，增加視覺層次 *@
+                @* 2. 看該餐總覽 *@
                 <MudButton Variant="Variant.Outlined"
                            Color="Color.Primary"
                            Size="Size.Large"
                            FullWidth="true"
-                           OnClick='() => NavManager.NavigateTo("")'>
-                    回首頁看儀表板
+                           OnClick="GoToMealSummary">
+                    查看本日餐點總覽
                 </MudButton>
             </MudStack>
         </MudCard>
@@ -144,7 +153,10 @@
     private int _calculatedCarbs = 0;
     private int _calculatedFat = 0;
 
-    private int _latestMealId; // 🌟 用來儲存剛存入的紀錄 ID
+    private int _latestMealId;
+
+    // 🌟 新增的 List，用來記錄「這次連續拍照」所有新增的餐點
+    private List<MealRecord> _sessionRecords = new List<MealRecord>();
 
     private void SimulateUpload()
     {
@@ -162,7 +174,7 @@
 
     private void SaveAndShowResult()
     {
-        // 1. 計算倍率 (這部分維持你原本的優秀邏輯)
+        // 1. 計算倍率
         int baseCalories = 350;
         int baseProtein = 30;
         int baseCarbs = 15;
@@ -178,14 +190,14 @@
         _calculatedCarbs = (int)(baseCarbs * multiplier);
         _calculatedFat = (int)(baseFat * multiplier);
 
-        // 🌟 2. 建立一個真正的紀錄物件
+        // 2. 建立紀錄物件
         var newMeal = new MealRecord
         {
             Date = _mealDate.ToString("yyyy-MM-dd"),
             Time = DateTime.Now.ToString("HH:mm"),
             MealType = _mealType,
             Name = _foodName,
-            Image = _previewImage, // 這裡會存入模擬的 Unsplash 圖片網址
+            Image = _previewImage,
             Calories = _calculatedCalories,
             Protein = _calculatedProtein,
             Carbs = _calculatedCarbs,
@@ -195,31 +207,37 @@
             Icon = _mealType == "早餐" ? Icons.Material.Filled.Coffee : Icons.Material.Filled.SetMeal
         };
 
-        // 🌟 呼叫 Service 存檔並取得回傳的物件 (假設 Service 會幫我們產生 ID)
+        // 3. 呼叫 Service 存檔
         NutritionService.AddMeal(newMeal);
 
-        // 取得該筆紀錄在 List 中的 Id (或是你在 Service 裡設計讓 AddMeal 回傳 Id)
-        _latestMealId = newMeal.Id;
+        // 4. 將剛剛存入的紀錄加入到暫存清單中，方便在畫面上顯示
+        _sessionRecords.Add(newMeal);
 
-        // 4. 顯示成功畫面
+        // 5. 顯示成功畫面
         _showFinalSuccess = true;
-    }
-
-    private void GoToMealDetail()
-    {
-        // 🌟 根據紀錄的 Id 跳轉到詳細頁面
-        NavManager.NavigateTo($"/meal/{_latestMealId}");
     }
 
     private void ResetUpload()
     {
         _showResult = false;
         _showFinalSuccess = false;
-        _mealDate = DateTime.Today;
-        _mealType = "午餐";
+        
+        // 🌟 注意：這裡刻意不重置 _mealDate 和 _mealType！
+        // 這樣使用者「繼續拍照」時，系統就會預設他們還在拍「同一天的同一餐」，不用重新選。
+        
         _foodName = "";
         _ingredients = "";
         _portion = "1 份";
         _notes = "";
+        _previewImage = "";
+    }
+
+    private void GoToMealSummary()
+    {
+        // 🌟 將當前紀錄的日期轉換為 "yyyy-MM-dd" 格式
+        string dateString = _mealDate.ToString("yyyy-MM-dd");
+        
+        // 🌟 直接跳轉到飲食日誌的對應日期頁面
+        NavManager.NavigateTo($"/diet-log/{dateString}");
     }
 }
