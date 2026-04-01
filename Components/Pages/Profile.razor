@@ -1,15 +1,27 @@
 ﻿@page "/profile"
+@using API_HSN.Dtos
+@inject HNM.Services.NutritionService NutritionService
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mt-8 pb-16">
 
-    <div class="d-flex align-center mb-10">
-        <MudAvatar Style="height:80px; width:80px; font-size:2rem; background-color:#00695C; color:white;">吳</MudAvatar>
-        <div class="ml-4">
-            <MudText Typo="Typo.h4" Style="font-weight:bold; color:#37474f;">吳宥辰 (Yu-Chen)</MudText>
-            <MudText Typo="Typo.body1" Style="color:#757575;" Class="mt-1">
-                20 歲 | 國立東華大學 | 男性
-            </MudText>
+    @* 1. 使用者基本資訊區塊 (綁定 DTO) *@
+    <div class="d-flex align-center mb-10 justify-space-between">
+        <div class="d-flex align-center">
+            <MudAvatar Style="height:80px; width:80px; font-size:2rem; background-color:#00695C; color:white;">
+                @(_userProfile.UserName?.FirstOrDefault() ?? '吳')
+            </MudAvatar>
+            <div class="ml-4">
+                <MudText Typo="Typo.h4" Style="font-weight:bold; color:#37474f;">@(_userProfile.UserName ?? "載入中...")</MudText>
+                <MudText Typo="Typo.body1" Style="color:#757575;" Class="mt-1">
+                    20 歲 | 國立東華大學 | 男性
+                </MudText>
+            </div>
         </div>
+        
+        @* 預留一個編輯按鈕 *@
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Edit">
+            編輯資料
+        </MudButton>
     </div>
 
     <div class="d-flex align-center mb-6">
@@ -17,6 +29,7 @@
         <MudText Typo="Typo.h5" Style="color: #37474f; font-weight:bold;">生理數據與指標</MudText>
     </div>
 
+    @* 2. 生理數據區塊 (動態生成) *@
     <MudGrid Spacing="3" Class="mb-8">
         @foreach (var item in healthMetrics)
         {
@@ -40,22 +53,26 @@
         }
     </MudGrid>
 
+    @* 3. RAG 建議與疾病提示區塊 (未來從 API 接資料) *@
     <MudPaper Class="pa-6 rounded-lg d-flex align-start" Elevation="1" Style="border-left: 6px solid #FF9800;">
         <div class="mr-4 mt-1">
             <MudIcon Icon="@Icons.Material.Filled.MedicalServices" Color="Color.Warning" Size="Size.Large" />
         </div>
 
         <div>
-            <MudText Typo="Typo.subtitle1" Style="font-weight:bold; color:#424242;">慢性病管理提示</MudText>
+            <MudText Typo="Typo.subtitle1" Style="font-weight:bold; color:#424242;">慢性病管理與飲食提示</MudText>
             <MudText Typo="Typo.body2" Class="mt-1" Style="color:#616161; line-height: 1.6;">
-                您的尿酸值偏高，建議每日飲水量需達到 2,500cc，並嚴格限制高普林食物（如內臟、帶殼海鮮）的攝取。
+                @_ragAdvice
             </MudText>
         </div>
     </MudPaper>
-
 </MudContainer>
 
 @code {
+    // 🌟 準備用來接 API 資料的 DTO 變數
+    private UserProfileDto _userProfile = new UserProfileDto();
+    private string _ragAdvice = "載入中...";
+
     public class HealthMetricItem
     {
         public string Title { get; set; } = "";
@@ -66,13 +83,44 @@
         public string ColorCode { get; set; } = "";
     }
 
-    List<HealthMetricItem> healthMetrics = new List<HealthMetricItem>
+    List<HealthMetricItem> healthMetrics = new List<HealthMetricItem>();
+
+    // 🌟 當頁面載入時，模擬從後端 API 抓取資料
+    protected override async Task OnInitializedAsync()
     {
-        new HealthMetricItem { Title = "BMI 指數", Value = "22.4", Unit = "kg/m²", ProgressValue = 50, ColorType = Color.Success, ColorCode = "#009688" },
-        new HealthMetricItem { Title = "血壓 (收縮/舒張)", Value = "128 / 84", Unit = "mmHg", ProgressValue = 70, ColorType = Color.Warning, ColorCode = "#009688" },
-        new HealthMetricItem { Title = "空腹血糖", Value = "98", Unit = "mg/dL", ProgressValue = 45, ColorType = Color.Success, ColorCode = "#009688" },
-        // ❌ 這裡已經將 HbA1c 糖化血色素 刪除了
-        new HealthMetricItem { Title = "總膽固醇", Value = "192", Unit = "mg/dL", ProgressValue = 75, ColorType = Color.Warning, ColorCode = "#009688" },
-        new HealthMetricItem { Title = "尿酸值", Value = "7.2", Unit = "mg/dL", ProgressValue = 90, ColorType = Color.Error, ColorCode = "#009688" }
-    };
+        // 模擬網路延遲
+        await Task.Delay(500);
+
+        // 未來這裡會改成： _userProfile = await NutritionService.GetUserProfileAsync();
+        // 現在我們先手動塞入「模擬 API 回傳」的假資料
+        _userProfile = new UserProfileDto
+        {
+            UserName = "吳宥辰 (Yu-Chen)",
+            Height = 175,
+            Weight = 68.6m,
+            BMI = 22.4m,
+            BloodPressure = "128 / 84",
+            BloodGlucose = 98,
+            Diseases = new List<string> { "高尿酸" }
+        };
+
+        // 模擬 RAG 系統根據疾病給出的建議
+        _ragAdvice = "您的尿酸值偏高，建議每日飲水量需達到 2,500cc，並嚴格限制高普林食物（如內臟、帶殼海鮮）的攝取。";
+
+        // 將 DTO 的資料對應到你漂亮的 UI 卡片上
+        UpdateMetricsUI();
+    }
+
+    private void UpdateMetricsUI()
+    {
+        healthMetrics = new List<HealthMetricItem>
+        {
+            new HealthMetricItem { Title = "BMI 指數", Value = _userProfile.BMI?.ToString() ?? "--", Unit = "kg/m²", ProgressValue = 50, ColorType = Color.Success, ColorCode = "#009688" },
+            new HealthMetricItem { Title = "血壓 (收縮/舒張)", Value = _userProfile.BloodPressure ?? "--", Unit = "mmHg", ProgressValue = 70, ColorType = Color.Warning, ColorCode = "#009688" },
+            new HealthMetricItem { Title = "空腹血糖", Value = _userProfile.BloodGlucose?.ToString() ?? "--", Unit = "mg/dL", ProgressValue = 45, ColorType = Color.Success, ColorCode = "#009688" },
+            // 下面兩項目前 DTO 沒開欄位，先保留你的假資料格式，未來可擴充
+            new HealthMetricItem { Title = "總膽固醇", Value = "192", Unit = "mg/dL", ProgressValue = 75, ColorType = Color.Warning, ColorCode = "#009688" },
+            new HealthMetricItem { Title = "尿酸值", Value = "7.2", Unit = "mg/dL", ProgressValue = 90, ColorType = Color.Error, ColorCode = "#009688" }
+        };
+    }
 }
