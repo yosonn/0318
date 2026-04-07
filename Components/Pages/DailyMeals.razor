@@ -44,15 +44,23 @@
 
     @foreach (var category in new[] { "早餐", "午餐", "晚餐", "點心", "宵夜" })
     {
-        // 從今天的餐點中，挑出屬於這個餐別的食物
         var mealsInCategory = DailyMealList.Where(m => m.MealType == category).ToList();
-
-        // 如果這個餐別有紀錄，才顯示標題和卡片
+        
         @if (mealsInCategory.Any())
         {
-            <MudText Typo="Typo.h5" Color="Color.Dark" Class="mt-8 mb-3">
-                <b>@category</b>
-            </MudText>
+            <div class="mt-8 mb-4">
+                <div class="d-flex align-end justify-space-between mb-2">
+                    <MudText Typo="Typo.h5" Color="Color.Dark">
+                        <b>@category</b>
+                    </MudText>
+                </div>
+                
+                <MudPaper Class="px-4 py-2 rounded-pill d-flex justify-space-around" Elevation="0" Style="background-color: #E3F2FD;">
+                    <MudText Typo="Typo.caption" Style="color: #5C6BC0;">蛋白質：<b>@mealsInCategory.Sum(i => i.Protein)</b>g</MudText>
+                    <MudText Typo="Typo.caption" Style="color: #FB8C00;">碳水：<b>@mealsInCategory.Sum(i => i.Carbs)</b>g</MudText>
+                    <MudText Typo="Typo.caption" Style="color: #7E57C2;">脂肪：<b>@mealsInCategory.Sum(i => i.Fat)</b>g</MudText>
+                </MudPaper>
+            </div>
 
             <MudGrid>
                 @foreach (var meal in mealsInCategory)
@@ -62,9 +70,16 @@
                             <MudCardMedia Image="@meal.Image" Height="200" Style="object-fit: cover;" />
                             <MudCardContent>
                                 <MudText Typo="Typo.h6">@meal.Name</MudText>
-                                <MudText Color="Color.Primary" Typo="Typo.subtitle1">
-                                    <b>@meal.Calories kcal</b>
+                                
+                                <MudText Color="Color.Primary" Typo="Typo.subtitle1" Class="mt-1">
+                                    <b>總計：@meal.Calories kcal</b>
                                 </MudText>
+
+                                <div class="d-flex justify-space-between mt-2">
+                                    <MudText Typo="Typo.caption" Style="color: #5C6BC0;">蛋白質：<b>@meal.Protein</b>g</MudText>
+                                    <MudText Typo="Typo.caption" Style="color: #FB8C00;">碳水：<b>@meal.Carbs</b>g</MudText>
+                                    <MudText Typo="Typo.caption" Style="color: #7E57C2;">脂肪：<b>@meal.Fat</b>g</MudText>
+                                </div>
                             </MudCardContent>
                         </MudCard>
                     </MudItem>
@@ -77,18 +92,14 @@
     {
         <MudAlert Severity="Severity.Info" Class="mt-6">這一天沒有任何飲食紀錄</MudAlert>
     }
-
 </MudContainer>
 
 @code {
     [Parameter]
     public string Date { get; set; } = "";
 
-    
-
     List<MealRecord> DailyMealList = new();
-
-    // 🌟 動態計算屬性：只要 DailyMealList 改變，這些數字就會自動重算
+    
     private int TotalCalories => DailyMealList.Sum(m => m.Calories);
     private int BreakfastCalories => DailyMealList.Where(m => m.MealType == "早餐").Sum(m => m.Calories);
     private int LunchCalories => DailyMealList.Where(m => m.MealType == "午餐").Sum(m => m.Calories);
@@ -97,10 +108,7 @@
 
     protected override void OnInitialized()
     {
-        // 直接向中央服務要求所有資料
         var allMeals = NutritionService.GetAllMeals();
-
-        // 根據網址傳進來的 Date 參數進行篩選
         DailyMealList = allMeals.Where(m => m.Date == Date).ToList();
     }
 

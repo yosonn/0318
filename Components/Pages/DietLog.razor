@@ -1,52 +1,79 @@
-﻿@inject NutritionService NutritionService
-@page "/diet-log"
+﻿@page "/diet-log"
+@inject NutritionService NutritionService
 @inject NavigationManager Nav
 
 <MudContainer MaxWidth="MaxWidth.Medium">
-    <MudText Typo="Typo.h4" Class="mb-6">
+    <MudText Typo="Typo.h4" Class="mb-6" Style="font-weight: bold;">
         飲食歷史日誌
     </MudText>
 
-    <MudPaper Elevation="3">
-        <MudList T="string" Clickable="true">
+    <MudPaper Elevation="3" Class="rounded-xl overflow-hidden">
+        <MudList T="string" Clickable="true" Class="py-0">
 
             @{
                 var groupedMeals = meals.GroupBy(m => m.Date).OrderByDescending(g => g.Key).ToList();
             }
 
+            @if (!groupedMeals.Any())
+            {
+                <MudListItem>
+                    <MudText Typo="Typo.body1" Color="Color.Secondary" Class="pa-4 text-center">
+                        目前還沒有任何飲食紀錄喔！
+                    </MudText>
+                </MudListItem>
+            }
+
             @for (int i = 0; i < groupedMeals.Count; i++)
             {
                 var dateGroup = groupedMeals[i];
-                
-                // 🌟 核心邏輯：檢查這一天裡面，是不是有任何一筆紀錄包含圖片？
                 bool hasImages = dateGroup.Any(m => !string.IsNullOrEmpty(m.Image));
+                
+                // 🌟 動態計算當日所有營養素總和
+                int dailyCalories = dateGroup.Sum(m => m.Calories);
+                int dailyProtein = dateGroup.Sum(m => m.Protein);
+                int dailyCarbs = dateGroup.Sum(m => m.Carbs);
+                int dailyFat = dateGroup.Sum(m => m.Fat);
 
                 <MudListItem T="string" OnClick="@(() => OpenDailyMeals(dateGroup.Key))" Class="py-4">
     
-                    <div class="d-flex justify-space-between align-center px-2 @(hasImages ? "mb-3" : "")">
-                        <MudText Typo="Typo.h6" Class="d-flex align-center">
-                            <MudIcon Icon="@Icons.Material.Rounded.CalendarMonth" Class="mr-3" Color="Color.Primary" />
-                            <span style="font-weight: bold;">@dateGroup.Key</span>
-                        </MudText>
+                    <div class="d-flex justify-space-between align-start px-2 @(hasImages ? "mb-3" : "")">
+                        <div class="d-flex flex-column">
+                            <MudText Typo="Typo.h6" Class="d-flex align-center">
+                                <MudIcon Icon="@Icons.Material.Rounded.CalendarMonth" Class="mr-3" Color="Color.Primary" />
+                                <span style="font-weight: bold;">@dateGroup.Key</span>
+                            </MudText>
+                            
+                            <MudText Typo="Typo.body2" Class="ml-10 mt-1" Style="color: gray;">
+                                總攝取：<b style="color: #009688; font-size: 1.1em;">@dailyCalories.ToString("N0")</b> kcal
+                            </MudText>
 
-                        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="d-flex align-center">
-                            共 @dateGroup.Count(m => !string.IsNullOrEmpty(m.Image)) 筆紀錄 <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Class="ml-1" Size="Size.Small" />
-                        </MudText>
+                            <div class="d-flex gap-4 ml-10 mt-1">
+                                <MudText Typo="Typo.caption" Style="color: #5C6BC0;">蛋白質：<b>@dailyProtein</b>g</MudText>
+                                <MudText Typo="Typo.caption" Style="color: #FB8C00;">碳水：<b>@dailyCarbs</b>g</MudText>
+                                <MudText Typo="Typo.caption" Style="color: #7E57C2;">脂肪：<b>@dailyFat</b>g</MudText>
+                            </div>
+                        </div>
+
+                        <div class="d-flex flex-column align-end">
+                            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="d-flex align-center">
+                                共 @dateGroup.Count() 筆 <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Class="ml-1" Size="Size.Small" />
+                            </MudText>
+                        </div>
                     </div>
 
                     @if (hasImages)
                     {
-                        <div class="d-flex gap-3 px-2 ml-10" style="overflow-x: auto; padding-bottom: 4px;">
+                        <div class="d-flex gap-3 px-2 ml-10 mt-2" style="overflow-x: auto; padding-bottom: 4px;">
                             @foreach (var meal in dateGroup)
                             {
-                                // 雙重保險：只顯示有圖片網址的項目
                                 @if (!string.IsNullOrEmpty(meal.Image))
                                 {
                                     <MudImage Src="@meal.Image"
                                               Width="56"
                                               Height="56"
                                               ObjectFit="ObjectFit.Cover"
-                                              Class="rounded-lg" />
+                                              Class="rounded-lg"
+                                              Elevation="1" />
                                 }
                             }
                         </div>
@@ -65,12 +92,11 @@
 </MudContainer>
 
 @code {
-    // 🌟 1. 初始化一個乾淨的空串列，不再塞入任何假資料
     List<MealRecord> meals = new();
 
     protected override void OnInitialized()
     {
-        // 🌟 2. 頁面載入時，直接去 NutritionService 抓取你剛剛拍照存下來的「真實資料」
+        // 確保 MealRecord 類別中有 Protein, Carbs, Fat 屬性
         meals = NutritionService.GetAllMeals();
     }
 
