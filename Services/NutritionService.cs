@@ -5,7 +5,7 @@ namespace HNM.Services
 {
     public class NutritionService
     {
-        // 🌟 1. 這裡初始化一個真正乾淨的空串列
+        // 1. 這裡初始化一個真正乾淨的空串列
         private List<MealRecord> _meals = new();
 
         public NutritionService()

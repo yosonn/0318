@@ -7,7 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="MchHttpService" Version="8.0.0" />
     <PackageReference Include="MudBlazor" Version="9.0.0" />
+    <PackageReference Include="ResponseModel" Version="8.1.0" />
   </ItemGroup>
 
   <ItemGroup>
