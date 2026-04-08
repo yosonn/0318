@@ -2,7 +2,7 @@
 @inject HNM.Services.NutritionService NutritionService
 @inject NavigationManager Nav
 
-<MudContainer MaxWidth="MaxWidth.Large">
+<MudContainer MaxWidth="MaxWidth.Large" Class="pb-16 mt-4">
 
     <MudButton StartIcon="@Icons.Material.Filled.ArrowBack" Color="Color.Primary" OnClick="GoBack" Class="mb-4 px-0">
         返回日期列表
@@ -11,6 +11,16 @@
     <MudText Typo="Typo.h4" Class="mb-6">
         @Date 飲食紀錄
     </MudText>
+
+    <MudPaper Class="pa-5 mb-8 rounded-lg" Elevation="0" Style="background-color: #E8EAF6; border-left: 6px solid #3F51B5;">
+        <div class="d-flex align-center mb-2">
+            <MudIcon Icon="@Icons.Material.Filled.AutoAwesome" Color="Color.Info" Class="mr-2" />
+            <MudText Typo="Typo.subtitle1" Style="font-weight:bold; color: #1A237E;">今日 AI 營養診斷</MudText>
+        </div>
+        <MudText Typo="Typo.body2" Style="line-height: 1.6; color: #283593;">
+            @GetDailyAiFeedback()
+        </MudText>
+    </MudPaper>
 
     <MudPaper Class="pa-5 mb-8 rounded-xl" Elevation="2" Style="background-color: #F8FAF9; border-left: 6px solid #009688;">
         <div class="d-flex align-center justify-space-between mb-3">
@@ -23,22 +33,10 @@
         <MudDivider Class="mb-4" />
     
         <div class="d-flex justify-space-between text-center">
-            <div style="flex: 1;">
-                <MudText Typo="Typo.caption" Color="Color.Secondary">早餐</MudText>
-                <MudText Typo="Typo.body2" Style="font-weight:bold;">@BreakfastCalories kcal</MudText>
-            </div>
-            <div style="flex: 1;">
-                <MudText Typo="Typo.caption" Color="Color.Secondary">午餐</MudText>
-                <MudText Typo="Typo.body2" Style="font-weight:bold;">@LunchCalories kcal</MudText>
-            </div>
-            <div style="flex: 1;">
-                <MudText Typo="Typo.caption" Color="Color.Secondary">晚餐</MudText>
-                <MudText Typo="Typo.body2" Style="font-weight:bold;">@DinnerCalories kcal</MudText>
-            </div>
-            <div style="flex: 1;">
-                <MudText Typo="Typo.caption" Color="Color.Secondary">點心</MudText>
-                <MudText Typo="Typo.body2" Style="font-weight:bold;">@SnackCalories kcal</MudText>
-            </div>
+            <div style="flex: 1;"><MudText Typo="Typo.caption" Color="Color.Secondary">早餐</MudText><MudText Typo="Typo.body2" Style="font-weight:bold;">@BreakfastCalories kcal</MudText></div>
+            <div style="flex: 1;"><MudText Typo="Typo.caption" Color="Color.Secondary">午餐</MudText><MudText Typo="Typo.body2" Style="font-weight:bold;">@LunchCalories kcal</MudText></div>
+            <div style="flex: 1;"><MudText Typo="Typo.caption" Color="Color.Secondary">晚餐</MudText><MudText Typo="Typo.body2" Style="font-weight:bold;">@DinnerCalories kcal</MudText></div>
+            <div style="flex: 1;"><MudText Typo="Typo.caption" Color="Color.Secondary">點心</MudText><MudText Typo="Typo.body2" Style="font-weight:bold;">@SnackCalories kcal</MudText></div>
         </div>
     </MudPaper>
 
@@ -49,17 +47,40 @@
         @if (mealsInCategory.Any())
         {
             <div class="mt-8 mb-4">
-                <div class="d-flex align-end justify-space-between mb-2">
-                    <MudText Typo="Typo.h5" Color="Color.Dark">
-                        <b>@category</b>
-                    </MudText>
+                <div class="d-flex align-center justify-space-between mb-2">
+                    <MudText Typo="Typo.h5" Color="Color.Dark"><b>@category</b></MudText>
+                    
+                    <MudButton Variant="Variant.Text"
+                               StartIcon="@(_expandedMeals.Contains(category) ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.Analytics)"
+                               Color="Color.Info"
+                               Size="Size.Small"
+                               OnClick="@(() => ToggleMealAnalysis(category))">
+                        @(_expandedMeals.Contains(category) ? "收合分析" : "展開組合分析")
+                    </MudButton>
                 </div>
                 
-                <MudPaper Class="px-4 py-2 rounded-pill d-flex justify-space-around" Elevation="0" Style="background-color: #E3F2FD;">
-                    <MudText Typo="Typo.caption" Style="color: #5C6BC0;">蛋白質：<b>@mealsInCategory.Sum(i => i.Protein)</b>g</MudText>
-                    <MudText Typo="Typo.caption" Style="color: #FB8C00;">碳水：<b>@mealsInCategory.Sum(i => i.Carbs)</b>g</MudText>
-                    <MudText Typo="Typo.caption" Style="color: #7E57C2;">脂肪：<b>@mealsInCategory.Sum(i => i.Fat)</b>g</MudText>
+                <MudPaper Class="px-4 py-3 rounded-t-lg d-flex align-center justify-space-between flex-wrap gap-2" Elevation="0" Style="background-color: #E3F2FD;">
+                    <MudText Color="Color.Primary" Typo="Typo.subtitle1">
+                        <b>總計：@mealsInCategory.Sum(i => i.Calories).ToString("N0") kcal</b>
+                    </MudText>
+                    <div class="d-flex gap-4">
+                        <MudText Typo="Typo.caption" Style="color: #5C6BC0;">蛋白質：<b>@mealsInCategory.Sum(i => i.Protein)</b>g</MudText>
+                        <MudText Typo="Typo.caption" Style="color: #FB8C00;">碳水：<b>@mealsInCategory.Sum(i => i.Carbs)</b>g</MudText>
+                        <MudText Typo="Typo.caption" Style="color: #7E57C2;">脂肪：<b>@mealsInCategory.Sum(i => i.Fat)</b>g</MudText>
+                    </div>
                 </MudPaper>
+
+                <MudCollapse Expanded="@_expandedMeals.Contains(category)">
+                    <MudPaper Class="pa-4 rounded-b-lg mb-4" Elevation="0" Style="background-color: #F1F8E9; border: 1px dashed #AED581;">
+                        <div class="d-flex align-center mb-2">
+                            <MudIcon Icon="@Icons.Material.Filled.TipsAndUpdates" Size="Size.Small" Color="Color.Success" Class="mr-2" />
+                            <MudText Typo="Typo.subtitle2" Style="font-weight:bold; color: #33691E;">@category 組合診斷</MudText>
+                        </div>
+                        <MudText Typo="Typo.body2" Style="color: #558B2F; line-height: 1.5;">
+                            @GetMealCategoryFeedback(mealsInCategory)
+                        </MudText>
+                    </MudPaper>
+                </MudCollapse>
             </div>
 
             <MudGrid>
@@ -100,6 +121,9 @@
 
     List<MealRecord> DailyMealList = new();
     
+    // 🌟 控制哪些餐別的分析是展開的
+    private HashSet<string> _expandedMeals = new();
+
     private int TotalCalories => DailyMealList.Sum(m => m.Calories);
     private int BreakfastCalories => DailyMealList.Where(m => m.MealType == "早餐").Sum(m => m.Calories);
     private int LunchCalories => DailyMealList.Where(m => m.MealType == "午餐").Sum(m => m.Calories);
@@ -110,6 +134,52 @@
     {
         var allMeals = NutritionService.GetAllMeals();
         DailyMealList = allMeals.Where(m => m.Date == Date).ToList();
+    }
+
+    // 🌟 開關分析區塊的方法
+    private void ToggleMealAnalysis(string category)
+    {
+        if (_expandedMeals.Contains(category)) _expandedMeals.Remove(category);
+        else _expandedMeals.Add(category);
+    }
+
+    // 🌟 當餐組合分析邏輯
+    private string GetMealCategoryFeedback(List<MealRecord> items)
+    {
+        int totalCal = items.Sum(i => i.Calories);
+        bool hasDrink = items.Any(i => i.Name.Contains("飲") || i.Name.Contains("奶") || i.Name.Contains("茶") || i.Name.Contains("汁"));
+        bool hasVeg = items.Any(i => i.Ingredients.Contains("菜") || i.Ingredients.Contains("沙拉"));
+
+        if (items.Count >= 2 && hasDrink && totalCal > 700)
+            return "偵測到本餐包含「主食 + 飲品」組合，總熱量明顯偏高。建議將飲品換成無糖選項，或分兩次食用，以避免血糖上升過快。";
+        
+        if (!hasVeg && totalCal > 500)
+            return "這餐組合中缺乏明顯的纖維質來源。建議額外搭配一份燙青菜或沙拉，這能增加飽足感並幫助消化。";
+
+        if (items.Count == 1)
+            return "目前這餐僅紀錄了一項食物。如果是單吃麵食或飯類，建議下次多加一份蛋白質（如豆漿、滷蛋）讓營養更均衡！";
+
+        return "這是一份配搭得相當豐富且均衡的餐點組合，包含了多樣化的食材，非常適合維持健康的體態！";
+    }
+
+    private string GetDailyAiFeedback()
+    {
+        if (!DailyMealList.Any()) return "今天還沒有飲食紀錄喔！快去拍張照片開始記錄吧。";
+
+        int totalP = DailyMealList.Sum(m => m.Protein);
+        int totalC = DailyMealList.Sum(m => m.Carbs);
+        int totalF = DailyMealList.Sum(m => m.Fat);
+
+        if (TotalCalories > 2000)
+            return $"今天總熱量來到 {TotalCalories} kcal，稍微偏高了一些。建議晚點可以去散個步，或者明天減少澱粉類的份量喔！";
+        
+        if (totalP < 50)
+            return "今天的蛋白質攝取量目前還不足（僅有 " + totalP + "g），建議晚點或明天多補充魚類、瘦肉或豆漿，這對你的身體修復很重要。";
+
+        if (totalF > 70)
+            return "今天的油脂攝取似乎比較多，建議下一餐選擇清蒸或水煮的料理方式來平衡一下。";
+
+        return "今天的飲食分配非常理想！三大營養素的比例都在建議範圍內，維持這樣的步調非常棒，門諾醫院的醫師會為你的紀錄感到高興的！";
     }
 
     void OpenDetail(int id)

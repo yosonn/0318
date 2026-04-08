@@ -2,13 +2,13 @@
 @inject NutritionService NutritionService
 @inject NavigationManager Nav
 
-<MudContainer MaxWidth="MaxWidth.Medium">
+<MudContainer MaxWidth="MaxWidth.Medium" Class="pb-16 mt-4">
     <MudText Typo="Typo.h4" Class="mb-6" Style="font-weight: bold;">
         飲食歷史日誌
     </MudText>
 
     <MudPaper Elevation="3" Class="rounded-xl overflow-hidden">
-        <MudList T="string" Clickable="true" Class="py-0">
+        <MudList T="string" Clickable="false" Class="py-0">
 
             @{
                 var groupedMeals = meals.GroupBy(m => m.Date).OrderByDescending(g => g.Key).ToList();
@@ -26,26 +26,29 @@
             @for (int i = 0; i < groupedMeals.Count; i++)
             {
                 var dateGroup = groupedMeals[i];
+                var dateKey = dateGroup.Key;
                 bool hasImages = dateGroup.Any(m => !string.IsNullOrEmpty(m.Image));
                 
-                // 🌟 動態計算當日所有營養素總和
                 int dailyCalories = dateGroup.Sum(m => m.Calories);
                 int dailyProtein = dateGroup.Sum(m => m.Protein);
                 int dailyCarbs = dateGroup.Sum(m => m.Carbs);
                 int dailyFat = dateGroup.Sum(m => m.Fat);
 
-                <MudListItem T="string" OnClick="@(() => OpenDailyMeals(dateGroup.Key))" Class="py-4">
-    
-                    <div class="d-flex justify-space-between align-start px-2 @(hasImages ? "mb-3" : "")">
-                        <div class="d-flex flex-column">
+                <MudListItem T="string" Class="py-6 px-4">
+                    
+                    <div class="d-flex justify-space-between align-start mb-2" style="cursor:pointer" @onclick="@(() => OpenDailyMeals(dateKey))">
+                        <div class="d-flex flex-column" style="flex: 1;">
                             <MudText Typo="Typo.h6" Class="d-flex align-center">
                                 <MudIcon Icon="@Icons.Material.Rounded.CalendarMonth" Class="mr-3" Color="Color.Primary" />
-                                <span style="font-weight: bold;">@dateGroup.Key</span>
+                                <span style="font-weight: bold;">@dateKey</span>
                             </MudText>
                             
-                            <MudText Typo="Typo.body2" Class="ml-10 mt-1" Style="color: gray;">
-                                總攝取：<b style="color: #009688; font-size: 1.1em;">@dailyCalories.ToString("N0")</b> kcal
-                            </MudText>
+                            <div class="d-flex align-center gap-2 ml-10 mt-1">
+                                <MudText Typo="Typo.body2" Style="color: gray;">
+                                    總攝取：<b style="color: #009688; font-size: 1.1em;">@dailyCalories.ToString("N0")</b> kcal
+                                </MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">(@dateGroup.Count() 筆)</MudText>
+                            </div>
 
                             <div class="d-flex gap-4 ml-10 mt-1">
                                 <MudText Typo="Typo.caption" Style="color: #5C6BC0;">蛋白質：<b>@dailyProtein</b>g</MudText>
@@ -54,26 +57,57 @@
                             </div>
                         </div>
 
-                        <div class="d-flex flex-column align-end">
-                            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="d-flex align-center">
-                                共 @dateGroup.Count() 筆 <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Class="ml-1" Size="Size.Small" />
-                            </MudText>
+                        <div class="d-flex align-center mt-1">
+                            <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Color="Color.Default" />
                         </div>
                     </div>
 
+                    <div class="ml-10 mt-2 pa-2 rounded-lg d-flex align-center shadow-none" style="background-color: #F1F8E9; border: 1px dashed #AED581; max-width: 90%;">
+                        <MudIcon Icon="@Icons.Material.Filled.AutoAwesome" Size="Size.Small" Style="color: #558B2F;" Class="mr-2" />
+                        <MudText Typo="Typo.caption" Style="color: #33691E; font-weight: 500;">
+                            全日評估：@GetSimpleAiFeedback(dailyCalories, dailyProtein)
+                        </MudText>
+                    </div>
+
+                    <div class="ml-10 mt-2">
+                        <MudButton Variant="Variant.Text"
+                                   Size="Size.Small"
+                                   Color="Color.Info"
+                                   StartIcon="@(_expandedDates.Contains(dateKey) ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)"
+                                   OnClick="@(() => ToggleMealAnalysis(dateKey))"
+                                   Style="text-transform: none; padding: 0;">
+                            @(_expandedDates.Contains(dateKey) ? "收合各餐組合分析" : "展開各餐組合分析")
+                        </MudButton>
+                    </div>
+
+                    <MudCollapse Expanded="@_expandedDates.Contains(dateKey)" Class="ml-10 mt-2" Style="max-width: 90%;">
+                        <MudPaper Class="pa-3 rounded-lg" Elevation="0" Style="background-color: #E3F2FD; border: 1px solid #90CAF9;">
+                            <MudStack Spacing="2">
+                                @foreach (var cat in new[] { "早餐", "午餐", "晚餐", "點心", "宵夜" })
+                                {
+                                    var catMeals = dateGroup.Where(m => m.MealType == cat).ToList();
+                                    if (catMeals.Any())
+                                    {
+                                        <div class="d-flex flex-column">
+                                            <MudText Typo="Typo.caption" Style="font-weight:bold; color: #1565C0;">@cat (@catMeals.Sum(m => m.Calories) kcal)</MudText>
+                                            <MudText Typo="Typo.body2" Style="color: #0D47A1; font-size: 0.8rem; line-height: 1.4;">
+                                                @GetMealAnalysis(catMeals)
+                                            </MudText>
+                                        </div>
+                                    }
+                                }
+                            </MudStack>
+                        </MudPaper>
+                    </MudCollapse>
+
                     @if (hasImages)
                     {
-                        <div class="d-flex gap-3 px-2 ml-10 mt-2" style="overflow-x: auto; padding-bottom: 4px;">
+                        <div class="d-flex gap-3 px-2 ml-10 mt-4" style="overflow-x: auto; padding-bottom: 4px;">
                             @foreach (var meal in dateGroup)
                             {
                                 @if (!string.IsNullOrEmpty(meal.Image))
                                 {
-                                    <MudImage Src="@meal.Image"
-                                              Width="56"
-                                              Height="56"
-                                              ObjectFit="ObjectFit.Cover"
-                                              Class="rounded-lg"
-                                              Elevation="1" />
+                                    <MudImage Src="@meal.Image" Width="56" Height="56" ObjectFit="ObjectFit.Cover" Class="rounded-lg shadow-sm" />
                                 }
                             }
                         </div>
@@ -93,11 +127,45 @@
 
 @code {
     List<MealRecord> meals = new();
+    
+    // 🌟 控制每個日期摺疊面板狀態的集合
+    private HashSet<string> _expandedDates = new();
 
     protected override void OnInitialized()
     {
-        // 確保 MealRecord 類別中有 Protein, Carbs, Fat 屬性
         meals = NutritionService.GetAllMeals();
+    }
+
+    private void ToggleMealAnalysis(string date)
+    {
+        if (_expandedDates.Contains(date)) _expandedDates.Remove(date);
+        else _expandedDates.Add(date);
+    }
+
+    // 全日簡短總結
+    private string GetSimpleAiFeedback(int calories, int protein)
+    {
+        if (calories == 0) return "尚未記錄任何餐點。";
+        if (calories > 2200) return "熱量攝取偏高，建議增加運動量。";
+        if (protein < 40) return "蛋白質不足，建議下一餐補充肉蛋豆類。";
+        if (calories < 1200) return "熱量攝取略低，請確保營養均衡喔！";
+        return "今日飲食比例均衡，表現非常優異！";
+    }
+
+    // 🌟 當餐 (早/午/晚) 分析邏輯
+    private string GetMealAnalysis(List<MealRecord> items)
+    {
+        int totalCal = items.Sum(i => i.Calories);
+        bool hasDrink = items.Any(i => i.Name.Contains("飲") || i.Name.Contains("茶") || i.Name.Contains("奶"));
+        
+        if (items.Count > 1 && hasDrink && totalCal > 650)
+            return "主食搭配飲品總熱量較高，下次可考慮無糖飲品或減半份量。";
+        if (items.Count > 1 && totalCal < 400)
+            return "營養均衡的輕食組合，若有飢餓感可補充些許堅果。";
+        if (items.Count == 1 && totalCal > 600)
+            return "單一食物熱量偏高，建議搭配燙青菜增加纖維質。";
+        
+        return "餐點組合多樣，攝取相當均衡。";
     }
 
     void OpenDailyMeals(string date)

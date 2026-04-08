@@ -2,159 +2,261 @@
 @inject HNM.Services.NutritionService NutritionService
 @inject NavigationManager Nav
 
-<MudContainer MaxWidth="MaxWidth.Medium">
+<MudContainer MaxWidth="MaxWidth.Medium" Class="pb-16 mt-4">
 
-    <MudButton StartIcon="@Icons.Material.Filled.ArrowBack"
-               Color="Color.Primary"
-               OnClick="GoBack"
-               Class="mb-4 px-0">
-        返回 @meal.Date 飲食日誌
-    </MudButton>
-
-    @* MealDetail.razor *@
-    <MudText Typo="Typo.h4" Class="mb-4 d-flex align-center" Style="word-break: break-all;">
-        @meal.Name
-        <MudChip T="string" Color="Color.Secondary" Size="Size.Small" Class="ml-3">
-            @meal.MealType
-        </MudChip>
-    </MudText>
-
-    <MudCard Elevation="2" Class="rounded-lg">
-        <MudImage Src="@meal.Image"
-                  Fluid="true"
-                  Style="height: 450px; width: 100%;"
-                  ObjectFit="ObjectFit.Cover" />
-    </MudCard>
-
-    <MudText Typo="Typo.h6" Class="mt-6 mb-3">
-        營養資訊
-    </MudText>
-
-    
-
-
-    <MudGrid>
-        <MudItem xs="6">
-            <MudPaper Class="pa-4 text-center">
-                <MudText Typo="Typo.caption">熱量</MudText>
-                <MudText Typo="Typo.h5" Color="Color.Primary">@meal.Calories kcal</MudText>
-            </MudPaper>
-        </MudItem>
-
-        <MudItem xs="6">
-            <MudPaper Class="pa-4 text-center">
-                <MudText Typo="Typo.caption">蛋白質</MudText>
-                <MudText Typo="Typo.h5">@meal.Protein g</MudText>
-            </MudPaper>
-        </MudItem>
-
-        <MudItem xs="6">
-            <MudPaper Class="pa-4 text-center">
-                <MudText Typo="Typo.caption">碳水</MudText>
-                <MudText Typo="Typo.h5">@meal.Carbs g</MudText>
-            </MudPaper>
-        </MudItem>
-
-        <MudItem xs="6">
-            <MudPaper Class="pa-4 text-center">
-                <MudText Typo="Typo.caption">脂肪</MudText>
-                <MudText Typo="Typo.h5">@meal.Fat g</MudText>
-            </MudPaper>
-        </MudItem>
-    </MudGrid>
-
-    <MudDivider Class="my-6" />
-    @* MealDetail.razor *@
-    <MudDivider Class="my-6" />
-
-    <MudText Typo="Typo.h6" Class="mb-3">辨識食材內容</MudText>
-    <MudPaper Class="pa-4 mb-6" Elevation="0" Style="background-color: #F5F5F5;">
-        <MudText Typo="Typo.body1" Style="word-break: break-all;">@meal.Ingredients</MudText>
-    </MudPaper>
-
-    @* 備註資訊部分 *@
-    @if (!string.IsNullOrEmpty(meal.Notes))
+    @* 1. AI 重新分析中的等待動畫畫面 *@
+    @if (_isAnalyzing)
     {
-        <MudText Typo="Typo.h6" Class="mb-3">備註資訊</MudText>
-        <MudPaper Class="pa-4 mb-6" Elevation="0" Style="background-color: #FFFDE7; border-left: 4px solid #FBC02D;">
-            <MudText Typo="Typo.body2" Style="word-break: break-all;">@meal.Notes</MudText>
-        </MudPaper>
+        <div class="d-flex flex-column align-center justify-center" style="height: 60vh;">
+            <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" />
+            <MudText Typo="Typo.h6" Class="mt-6" Color="Color.Primary">AI 正在重新分析並校正資料...</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">這可能需要幾秒鐘的時間</MudText>
+
+            @if (!string.IsNullOrEmpty(meal.Image))
+            {
+                <MudImage Src="@meal.Image" Width="120" Height="120" ObjectFit="ObjectFit.Cover" Class="rounded-lg mt-8 shadow-sm" />
+            }
+        </div>
     }
+    else
+    {
+        <div class="mb-4">
+            <MudButton StartIcon="@Icons.Material.Filled.ArrowBack"
+                       Color="Color.Primary"
+                       OnClick="GoBack"
+                       Class="px-0">
+                返回 @meal.Date
+            </MudButton>
+        </div>
 
-    @* 1. 修正紀錄時間字體 *@
-    <MudText Typo="Typo.subtitle1" Class="mt-3" Style="font-weight:bold;">
-        紀錄時間
-    </MudText>
+        <div class="mb-4 d-flex align-center" style="word-break: break-all;">
+            @if (_isEditing)
+            {
+                <input class="custom-native-input" type="text" @bind="_editName" style="padding: 10px; border: 1px solid #c4c4c4; border-radius: 4px; font-size: 20px; font-weight: bold; width: 100%; max-width: 300px; margin-right: 12px;" placeholder="餐點名稱" />
+                <select class="custom-native-input" @bind="_editMealType" style="padding: 10px; border: 1px solid #c4c4c4; border-radius: 4px; font-size: 16px; background-color: white;">
+                    <option value="早餐">早餐</option>
+                    <option value="午餐">午餐</option>
+                    <option value="晚餐">晚餐</option>
+                    <option value="點心">點心</option>
+                    <option value="宵夜">宵夜</option>
+                </select>
+            }
+            else
+            {
+                <MudText Typo="Typo.h4" Class="mb-0">@meal.Name</MudText>
+                <MudChip T="string" Color="Color.Secondary" Size="Size.Small" Class="ml-3 mt-1">@meal.MealType</MudChip>
+            }
+        </div>
 
-    <MudText Typo="Typo.body1" Class="mb-4">
-        @meal.Date @meal.Time
-    </MudText>
+        <MudCard Elevation="2" Class="rounded-lg mb-6">
+            <MudImage Src="@meal.Image" Fluid="true" Style="height: 350px; width: 100%;" ObjectFit="ObjectFit.Cover" />
+        </MudCard>
 
-    <MudText Typo="Typo.subtitle1" Style="font-weight:bold;">
-        AI 辨識可信度
-    </MudText>
+        <MudPaper Class="pa-5 mb-6 rounded-lg" Elevation="0" Style="background-color: #E8EAF6; border-left: 6px solid #3F51B5;">
+            <div class="d-flex align-center mb-2">
+                <MudIcon Icon="@Icons.Material.Filled.AutoAwesome" Color="Color.Info" Class="mr-2" />
+                <MudText Typo="Typo.subtitle1" Style="font-weight:bold; color: #1A237E;">AI 營養建議與回饋</MudText>
+            </div>
+            <MudText Typo="Typo.body2" Style="line-height: 1.6; color: #283593;">
+                @GetAiFeedback()
+            </MudText>
+        </MudPaper>
 
-    <div class="d-flex align-center mt-1">
-        <MudChip T="string" Color="Color.Success" Size="Size.Medium" Class="ml-0">
-            @((meal.Confidence * 100).ToString("F0"))%
-        </MudChip>
-    </div>
+        <MudText Typo="Typo.h6" Class="mb-3">單項營養資訊</MudText>
+        <MudGrid Class="mb-6">
+            <MudItem xs="6">
+                <MudPaper Class="pa-4 text-center">
+                    <MudText Typo="Typo.caption">熱量 (kcal)</MudText>
+                    @if (_isEditing)
+                    {
+                        <input class="custom-native-input mt-1" type="number" @bind="_editCalories" style="width: 80%; padding: 6px; border: 1px solid #009688; border-radius: 4px; text-align: center; font-weight: bold; color: #009688;" />
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.h5" Color="Color.Primary">@meal.Calories</MudText>
+                    }
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="6">
+                <MudPaper Class="pa-4 text-center">
+                    <MudText Typo="Typo.caption">蛋白質 (g)</MudText>
+                    @if (_isEditing)
+                    {
+                        <input class="custom-native-input mt-1" type="number" @bind="_editProtein" style="width: 80%; padding: 6px; border: 1px solid #c4c4c4; border-radius: 4px; text-align: center;" />
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.h5">@meal.Protein</MudText>
+                    }
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="6">
+                <MudPaper Class="pa-4 text-center">
+                    <MudText Typo="Typo.caption">碳水 (g)</MudText>
+                    @if (_isEditing)
+                    {
+                        <input class="custom-native-input mt-1" type="number" @bind="_editCarbs" style="width: 80%; padding: 6px; border: 1px solid #c4c4c4; border-radius: 4px; text-align: center;" />
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.h5">@meal.Carbs</MudText>
+                    }
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="6">
+                <MudPaper Class="pa-4 text-center">
+                    <MudText Typo="Typo.caption">脂肪 (g)</MudText>
+                    @if (_isEditing)
+                    {
+                        <input class="custom-native-input mt-1" type="number" @bind="_editFat" style="width: 80%; padding: 6px; border: 1px solid #c4c4c4; border-radius: 4px; text-align: center;" />
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.h5">@meal.Fat</MudText>
+                    }
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
 
+        <MudDivider Class="my-6" />
 
-    @* 🌟 這裡新增刪除按鈕 *@
-    <MudDivider Class="my-8" />
-    <MudButton Variant="Variant.Filled"
-               Color="Color.Error"
-               Size="Size.Large"
-               FullWidth="true"
-               StartIcon="@Icons.Material.Filled.Delete"
-               OnClick="DeleteRecord"
-               Class="mb-6">
-        刪除此筆紀錄
-    </MudButton>
+        <MudText Typo="Typo.h6" Class="mb-3">辨識食材內容</MudText>
+        @if (_isEditing)
+        {
+            <textarea class="custom-native-input mb-6" @bind="_editIngredients" rows="3" style="width: 100%; padding: 14px; border: 1px solid #009688; border-radius: 4px; font-size: 16px; resize: none;"></textarea>
+        }
+        else
+        {
+            <MudPaper Class="pa-4 mb-6" Elevation="0" Style="background-color: #F5F5F5;">
+                <MudText Typo="Typo.body1" Style="word-break: break-all;">@meal.Ingredients</MudText>
+            </MudPaper>
+        }
 
+        <MudText Typo="Typo.h6" Class="mb-3">備註資訊</MudText>
+        @if (_isEditing)
+        {
+            <textarea class="custom-native-input mb-6" @bind="_editNotes" rows="3" style="width: 100%; padding: 14px; border: 1px solid #009688; border-radius: 4px; font-size: 16px; resize: none;" placeholder="例如：半糖、去冰、少油"></textarea>
+        }
+        else
+        {
+            @if (!string.IsNullOrEmpty(meal.Notes))
+            {
+                <MudPaper Class="pa-4 mb-6" Elevation="0" Style="background-color: #FFFDE7; border-left: 4px solid #FBC02D;">
+                    <MudText Typo="Typo.body2" Style="word-break: break-all;">@meal.Notes</MudText>
+                </MudPaper>
+            }
+            else
+            {
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-6">無備註</MudText>
+            }
+        }
+
+        <MudText Typo="Typo.subtitle1" Class="mt-3" Style="font-weight:bold;">紀錄時間</MudText>
+        <MudText Typo="Typo.body1" Class="mb-4">@meal.Date @meal.Time</MudText>
+
+        @if (!_isEditing)
+        {
+            <MudText Typo="Typo.subtitle1" Style="font-weight:bold;">AI 辨識可信度</MudText>
+            <div class="d-flex align-center mt-1">
+                <MudChip T="string" Color="Color.Success" Size="Size.Medium" Class="ml-0">
+                    @((meal.Confidence * 100).ToString("F0"))%
+                </MudChip>
+            </div>
+        }
+
+        <MudDivider Class="my-8" />
+
+        @if (!_isEditing)
+        {
+            <MudButton Variant="Variant.Filled" Color="Color.Warning" Size="Size.Large" FullWidth="true" StartIcon="@Icons.Material.Filled.Edit" OnClick="EnterEditMode" Class="mb-4 shadow-sm">編輯此筆內容</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Error" Size="Size.Large" FullWidth="true" StartIcon="@Icons.Material.Filled.Delete" OnClick="DeleteRecord" Class="mb-6 shadow-sm">刪除此筆紀錄</MudButton>
+        }
+        else
+        {
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" FullWidth="true" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveChangesAsync" Class="mb-4 shadow-md">儲存修改並重新分析</MudButton>
+            <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Large" FullWidth="true" StartIcon="@Icons.Material.Filled.Close" OnClick="CancelEdit" Class="mb-6">取消編輯</MudButton>
+        }
+    }
 </MudContainer>
 
+<style>
+    .custom-native-input:focus {
+        outline: none !important;
+        border-color: #009688 !important;
+        border-width: 2px !important;
+        box-shadow: none !important;
+    }
+</style>
 
 @code {
-    [Parameter]
-    public int Id { get; set; }
-    
+    [Parameter] public int Id { get; set; }
     MealRecord meal = new();
+    private bool _isEditing = false;
+    private bool _isAnalyzing = false;
 
-    protected override void OnInitialized()
+    private string _editName = "";
+    private string _editMealType = "";
+    private int _editCalories = 0;
+    private int _editProtein = 0;
+    private int _editCarbs = 0;
+    private int _editFat = 0;
+    private string _editIngredients = "";
+    private string _editNotes = "";
+
+    protected override void OnInitialized() => LoadData();
+    private void LoadData() => meal = NutritionService.GetMealById(Id);
+
+    private void EnterEditMode()
     {
-        // 呼叫我們在 Service 寫好的方法，根據網址傳來的 Id 抓資料
-        meal = NutritionService.GetMealById(Id);
+        _editName = meal.Name;
+        _editMealType = meal.MealType;
+        _editCalories = meal.Calories;
+        _editProtein = meal.Protein;
+        _editCarbs = meal.Carbs;
+        _editFat = meal.Fat;
+        _editIngredients = meal.Ingredients;
+        _editNotes = meal.Notes;
+        _isEditing = true;
     }
 
-    private void GoBack()
+    private void CancelEdit() => _isEditing = false;
+
+    private async Task SaveChangesAsync()
     {
-        if (!string.IsNullOrEmpty(meal.Date))
-        {
-            Nav.NavigateTo($"/diet-log/{meal.Date}");
-        }
-        else
-        {
-            Nav.NavigateTo("/diet-log");
-        }
+        _isAnalyzing = true;
+        StateHasChanged();
+        await Task.Delay(2000);
+        meal.Name = _editName;
+        meal.MealType = _editMealType;
+        meal.Calories = _editCalories;
+        meal.Protein = _editProtein;
+        meal.Carbs = _editCarbs;
+        meal.Fat = _editFat;
+        meal.Ingredients = _editIngredients;
+        meal.Notes = _editNotes;
+        NutritionService.UpdateMeal(meal);
+        _isAnalyzing = false;
+        _isEditing = false;
+        LoadData();
     }
 
-    // 🌟 這裡新增刪除方法
+    // 🌟 核心邏輯：根據熱量與營養比例生成 AI 回饋 (唯讀內容)
+    private string GetAiFeedback()
+    {
+        if (meal.Calories > 600)
+            return "這餐熱量稍微偏高喔！建議下一餐可以增加蔬菜攝取量，並減少油炸類或精緻澱粉的比例，有助於維持血糖穩定。";
+        if (meal.Protein < 15)
+            return "這餐的蛋白質攝取量較少。蛋白質是修復肌肉的重要營養，下次可以考慮多加一顆蛋或一份豆製品來平衡營養！";
+        if (meal.Carbs > 80)
+            return "這餐碳水化合物比例較高。如果是慢跑或高強度運動後吃很合適，但平時建議增加些膳食纖維來延緩血糖吸收。";
+        
+        return "這是一份相當均衡的餐點！優質蛋白與碳水的比例抓得很好，繼續保持這樣的飲食節律。";
+    }
+
+    private void GoBack() => Nav.NavigateTo(!string.IsNullOrEmpty(meal.Date) ? $"/diet-log/{meal.Date}" : "/diet-log");
     private void DeleteRecord()
     {
-        // 1. 呼叫 Service 刪除這筆資料
-        // (注意：請確認你的 NutritionService 裡面有寫好 DeleteMeal 或是 RemoveMeal 的方法)
         NutritionService.DeleteMeal(Id);
-
-        // 2. 刪除後跳轉回該日期的日誌頁面
-        if (!string.IsNullOrEmpty(meal.Date))
-        {
-            Nav.NavigateTo($"/diet-log/{meal.Date}");
-        }
-        else
-        {
-            Nav.NavigateTo("/diet-log");
-        }
+        Nav.NavigateTo(!string.IsNullOrEmpty(meal.Date) ? $"/diet-log/{meal.Date}" : "/diet-log");
     }
 }

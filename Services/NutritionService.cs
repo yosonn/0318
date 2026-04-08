@@ -31,5 +31,27 @@ namespace HNM.Services
                 _meals.Remove(mealToRemove);
             }
         }
+        // 🌟 新增：用來更新餐點資料的方法
+        public void UpdateMeal(MealRecord updatedMeal)
+        {
+            // 1. 先在你的資料庫(或記憶體清單)中，找找看有沒有這筆 Id 的舊資料
+            // ⚠️ 注意：這裡的 "meals" 請換成你 Service 裡面宣告的那個 List 變數名稱 (可能是 _meals 或 meals)
+            var existingMeal = _meals.FirstOrDefault(m => m.Id == updatedMeal.Id);
+
+            // 2. 如果有找到，就把新的值全部覆蓋過去
+            if (existingMeal != null)
+            {
+                existingMeal.Name = updatedMeal.Name;
+                existingMeal.MealType = updatedMeal.MealType;
+                existingMeal.Calories = updatedMeal.Calories;
+                existingMeal.Protein = updatedMeal.Protein;
+                existingMeal.Carbs = updatedMeal.Carbs;
+                existingMeal.Fat = updatedMeal.Fat;
+                existingMeal.Ingredients = updatedMeal.Ingredients;
+                existingMeal.Notes = updatedMeal.Notes;
+
+                // 如果未來你有新增其他可以修改的欄位，也要記得補在這裡喔！
+            }
+        }
     }
 }
