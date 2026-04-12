@@ -14,7 +14,8 @@ builder.Services.AddRazorComponents()
         options.MaximumReceiveMessageSize = 1024 * 1024 * 15; // 允許傳輸最大 15MB 的資料
     });
 
-builder.Services.AddSingleton<NutritionService>();
+// Blazor Server 建議使用 Scoped，避免所有使用者共用同一份飲食資料。
+builder.Services.AddScoped<NutritionService>();
 
 var app = builder.Build();
 
